@@ -49,10 +49,51 @@
         .popup-row { font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
         .popup-label { font-weight: 600; color: #64748b; }
         .popup-val { font-weight: 700; color: #1e293b; text-align: right; }
+
+        /* Giriş Ekranı */
+        #loginScreen { transition: opacity 0.5s ease; }
     </style>
 </head>
 <body class="bg-[#f8fafc] min-h-screen flex flex-col">
 
+    <!-- Giriş Ekranı -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-[2000] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Mersin THA Takip Sistemi</h2>
+                <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Mersin Kadastro Müdürlüğü</p>
+            </div>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Kullanıcı Adı</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="loginUser" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-slate-700" placeholder="Kullanıcı adınızı girin">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Şifre</label>
+                    <div class="relative">
+                        <i class="fas fa-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="loginPass" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-slate-700" placeholder="Şifrenizi girin">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-indigo-200 mt-2 flex justify-center items-center gap-2">
+                    <i class="fas fa-sign-in-alt"></i> Giriş Yap
+                </button>
+            </form>
+            <div class="mt-8 text-center border-t border-slate-100 pt-4">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">© Gökhan ELGÜL tarafından tasarlanmıştır.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ana Uygulama -->
     <header class="sticky top-0 z-[100] glass-effect px-4 md:px-6 py-3">
         <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center gap-3">
@@ -71,6 +112,9 @@
                 <div id="connectionStatus" class="text-[10px] font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-400 flex items-center gap-2">
                     <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> BAĞLANTI YOK
                 </div>
+                <button onclick="logout()" class="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i> ÇIKIŞ
+                </button>
             </div>
         </div>
     </header>
@@ -172,7 +216,7 @@
                         <tr id="tableHeader"></tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50 text-xs md:text-sm">
-                        <tr><td colspan="11" class="py-24 text-center opacity-30 font-medium italic">Veriler yükleniyor...</td></tr>
+                        <tr><td colspan="11" class="py-24 text-center opacity-30 font-medium italic">Giriş yapıldıktan sonra veriler yüklenecektir.</td></tr>
                     </tbody>
                 </table>
                 <div id="loadMoreArea" class="p-4 text-center hidden">
@@ -230,6 +274,41 @@
         let districtKMLs = new Map(); 
         let repoFilesCache = []; 
         let districtGlobalBounds = null;
+
+        // Sayfa Yüklendiğinde Oturum Kontrolü
+        window.onload = () => {
+            if (localStorage.getItem('tha_logged_in') === 'true') {
+                document.getElementById('loginScreen').style.display = 'none';
+                initMap();
+                fetchDistrictData();
+            }
+        };
+
+        // Giriş İşlemi
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+
+            if (user === 'mersinkm' && pass === '503344') {
+                localStorage.setItem('tha_logged_in', 'true'); // Oturumu kaydet
+                const screen = document.getElementById('loginScreen');
+                screen.style.opacity = '0';
+                setTimeout(() => {
+                    screen.style.display = 'none';
+                    initMap();
+                    fetchDistrictData();
+                }, 500);
+            } else {
+                showToast("Hatalı kullanıcı adı veya şifre!", "error");
+            }
+        }
+
+        // Çıkış İşlemi
+        function logout() {
+            localStorage.removeItem('tha_logged_in');
+            location.reload();
+        }
 
         function normalizeId(id) {
             if (id === null || id === undefined) return "";
@@ -555,7 +634,6 @@
 
                 poly.bindPopup(popupContent);
                 
-                // Haritanın açılma animasyonunun bitmesini bekle ve sonra odaklan
                 if(wasClosed) {
                     setTimeout(() => {
                         map.invalidateSize();
@@ -859,10 +937,6 @@
             fetchDistrictData();
         }
 
-        window.onload = () => {
-            initMap();
-            fetchDistrictData();
-        };
         window.addEventListener('beforeunload', (e) => { if (isModified) { e.preventDefault(); e.returnValue = ''; } });
     </script>
 </body>
