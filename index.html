@@ -803,16 +803,27 @@
 
         function updateRowStatus(index, newStatus) {
             currentData[index]["Onay Durumu"] = newStatus;
-            if(newStatus !== "Bekliyor" && !currentData[index]["İşlem Tarihi"]) {
+            
+            if(newStatus !== "Bekliyor") {
                 currentData[index]["İşlem Tarihi"] = new Date().toISOString().split('T')[0];
+            } else {
+                currentData[index]["İşlem Tarihi"] = "";
             }
+            
             isModified = true;
             updateSaveButton();
             updateStats(currentData);
+            
             const rowEl = document.getElementById(`row-${index}`);
             if(rowEl) {
                 const statusCell = rowEl.querySelector('.status-cell');
                 statusCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[8px] md:text-[9px] shadow-sm ${getStatusColor(newStatus)}">${newStatus.toUpperCase()}</span>`;
+                
+                const dateInput = rowEl.querySelector('.date-input');
+                if(dateInput) {
+                    dateInput.value = currentData[index]["İşlem Tarihi"];
+                }
+
                 if(newStatus === "Onaylandı") rowEl.classList.add('row-approved');
                 else rowEl.classList.remove('row-approved');
             }
