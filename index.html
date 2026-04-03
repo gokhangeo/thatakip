@@ -198,11 +198,16 @@
                 <label class="text-[10px] font-bold text-indigo-600 uppercase mb-1 block ml-1 tracking-tight italic">Tarih Filtresi</label>
                 <input type="date" id="dateFilter" onchange="filterLocalData()" class="w-full px-3 py-2 bg-white border border-indigo-100 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 text-sm">
             </div>
-            <div class="md:col-span-3 flex flex-col justify-end">
-                <button id="saveBtn" onclick="saveChangesToGitHub()" disabled class="w-full bg-slate-100 text-slate-300 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed shadow-sm">
-                    <i class="fas fa-save"></i> Kaydet
-                </button>
-                <div id="btnWarning" class="hidden blink-warning text-[10px] font-bold text-red-600 mt-1 text-center uppercase tracking-tighter">
+            <div class="md:col-span-3 flex flex-col justify-end gap-1">
+                <div class="flex gap-2 w-full">
+                    <button onclick="exportToExcel()" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2.5 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Ekrondaki Tabloyu Excel'e İndir">
+                        <i class="fas fa-file-excel"></i>
+                    </button>
+                    <button id="saveBtn" onclick="saveChangesToGitHub()" disabled class="w-3/4 bg-slate-100 text-slate-300 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed shadow-sm">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+                <div id="btnWarning" class="hidden blink-warning text-[10px] font-bold text-red-600 text-center uppercase tracking-tighter mt-1">
                     <i class="fas fa-exclamation-triangle"></i> Kaydedilmemiş Değişiklik Var
                 </div>
             </div>
@@ -257,7 +262,7 @@
         const GITHUB_BRANCH = "main";
 
         const DISTRICTS = ["AKDENİZ", "ANAMUR", "AYDINCIK", "BOZYAZI", "ERDEMLİ", "GÜLNAR", "MEZİTLİ", "MUT", "SİLİFKE", "TARSUS", "TOROSLAR", "YENİŞEHİR"];
-        const STAGES = ["Bekliyor", "Onaylandı", "Dosya Hazırlandı", "Bakanlığa Gönderildi", "Kurum Görüşü Soruldu", "Kurum Görüşleri Tamamlandı", "Tescile Gönderildi"];
+        const STAGES = ["Bekliyor", "Onaylandı(Firmaya İletildi)", "Dosya Hazırlandı", "Bakanlığa Gönderildi", "Bakanlıktan Geldi", "Kurum Görüşü Soruldu", "Kurum Görüşleri Tamamlandı", "Tescile Gönderildi"];
 
         let currentData = []; 
         let displayList = []; 
@@ -308,6 +313,39 @@
         function logout() {
             localStorage.removeItem('tha_logged_in');
             location.reload();
+        }
+
+        // Excel İndirme İşlemi
+        function exportToExcel() {
+            if(displayList.length === 0) {
+                showToast("İndirilecek veri bulunamadı!", "error");
+                return;
+            }
+            
+            toggleLoader(true, "Excel Dosyası Hazırlanıyor...");
+            setTimeout(() => {
+                try {
+                    // İçerisine harita ikonları olan sütunu temizleyerek temiz veri listesi oluşturuyoruz
+                    const exportData = displayList.map(({ _SOURCE_DISTRICT, ...rest }) => {
+                        let obj = {};
+                        if(currentDistrict === "ALL") obj["İlçe"] = _SOURCE_DISTRICT;
+                        obj = { ...obj, ...rest };
+                        return obj;
+                    });
+
+                    const worksheet = XLSX.utils.json_to_sheet(exportData);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, "THA_Rapor");
+                    
+                    const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                    XLSX.writeFile(workbook, `THA_Rapor_${currentDistrict}_${dateStr}.xlsx`);
+                    showToast("Excel dosyası başarıyla indirildi.");
+                } catch (error) {
+                    showToast("İndirme sırasında bir hata oluştu.", "error");
+                } finally {
+                    toggleLoader(false);
+                }
+            }, 500);
         }
 
         function normalizeId(id) {
@@ -545,6 +583,12 @@
                                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                                 const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                                 
+                                data.forEach(item => {
+                                    if(item["Onay Durumu"] === "Onaylandı") {
+                                        item["Onay Durumu"] = "Onaylandı(Firmaya İletildi)";
+                                    }
+                                });
+
                                 const b = await fetchKML(d);
                                 if(b && b.isValid()) {
                                     totalBounds.extend(b);
@@ -612,7 +656,7 @@
                 const alan = parsel ? (parsel["Yüzölçümü (m²)"] || parsel["Yüzölçümü (m2)"] || "-") : "-";
                 const not = parsel ? (parsel["Kurum Bilgisi"] || "Not yok") : "-";
                 
-                const color = status === "Onaylandı" ? "#10b981" : "#4338ca";
+                const color = status === "Onaylandı(Firmaya İletildi)" ? "#10b981" : "#4338ca";
 
                 const poly = L.polygon(coords, { 
                     color: color, 
@@ -709,7 +753,7 @@
             const rowsHtml = chunk.map((row) => {
                 const globalIndex = currentData.indexOf(row);
                 const status = String(row["Onay Durumu"] || "Bekliyor").trim();
-                const isFinal = status === "Onaylandı";
+                const isFinal = status === "Onaylandı(Firmaya İletildi)";
                 const alan = row["Yüzölçümü (m²)"] || row["Yüzölçümü (m2)"] || row["Alan"] || "-";
                 const thaId = row["THA ID"] || "";
                 
@@ -813,7 +857,6 @@
             isModified = true;
             updateSaveButton();
             updateStats(currentData);
-            
             const rowEl = document.getElementById(`row-${index}`);
             if(rowEl) {
                 const statusCell = rowEl.querySelector('.status-cell');
@@ -824,7 +867,7 @@
                     dateInput.value = currentData[index]["İşlem Tarihi"];
                 }
 
-                if(newStatus === "Onaylandı") rowEl.classList.add('row-approved');
+                if(newStatus === "Onaylandı(Firmaya İletildi)") rowEl.classList.add('row-approved');
                 else rowEl.classList.remove('row-approved');
             }
         }
@@ -880,7 +923,7 @@
 
         function getStatusColor(status) {
             if(!status || status === "Bekliyor") return "bg-slate-100 text-slate-400";
-            if(status === "Onaylandı") return "bg-emerald-600 text-white font-bold";
+            if(status === "Onaylandı(Firmaya İletildi)") return "bg-emerald-600 text-white font-bold";
             if(status.includes("Bakanlık")) return "bg-indigo-600 text-white font-medium";
             if(status.includes("Görüşü Soruldu")) return "bg-amber-100 text-amber-700 border border-amber-200";
             if(status.includes("Görüşleri Tamamlandı")) return "bg-teal-50 text-teal-700 border border-teal-200";
