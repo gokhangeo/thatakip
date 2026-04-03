@@ -66,6 +66,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-slate-800">Mersin THA Takip Sistemi</h2>
                 <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Mersin Kadastro Müdürlüğü</p>
+                <p class="text-[9px] text-slate-400 font-medium italic mt-1">© Gökhan ELGÜL tarafından tasarlanmıştır.</p>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-5">
@@ -87,9 +88,6 @@
                     <i class="fas fa-sign-in-alt"></i> Giriş Yap
                 </button>
             </form>
-            <div class="mt-8 text-center border-t border-slate-100 pt-4">
-                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">© Gökhan ELGÜL tarafından tasarlanmıştır.</p>
-            </div>
         </div>
     </div>
 
@@ -103,6 +101,7 @@
                 <div>
                     <h1 class="text-base md:text-lg font-bold text-slate-800 leading-tight">THA İş Takip Sistemi</h1>
                     <p class="text-[9px] md:text-[10px] text-indigo-600 font-bold uppercase tracking-widest">MERSİN KADASTRO MÜDÜRLÜĞÜ</p>
+                    <p class="text-[8px] text-slate-400 font-medium italic mt-0.5">© Gökhan ELGÜL tarafından tasarlanmıştır.</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -161,12 +160,11 @@
                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">2. Öncelik</p>
                 <h3 id="statP2" class="text-xl md:text-2xl font-black text-amber-600 leading-none mt-1">0</h3>
             </div>
-            <div onclick="setPriorityFilter('3.')" id="card-p3" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-slate-400">
+            <div onclick="setPriorityFilter('3.')" id="card-p3" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-red-500">
                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">3. Öncelik</p>
-                <h3 id="statP3" class="text-xl md:text-2xl font-black text-slate-600 leading-none mt-1">0</h3>
+                <h3 id="statP3" class="text-xl md:text-2xl font-black text-red-600 leading-none mt-1">0</h3>
             </div>
 
-            <!-- Bugün Yapılan İşlem Kartı -->
             <div onclick="setTodayFilter()" id="card-today" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-sky-500">
                 <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
                     <p>Bugün Yapılan</p>
@@ -209,7 +207,7 @@
             </div>
             <div class="md:col-span-3 flex flex-col justify-end gap-1">
                 <div class="flex gap-2 w-full">
-                    <button onclick="exportToExcel()" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2.5 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Ekrondaki Tabloyu Excel'e İndir">
+                    <button onclick="exportToExcel()" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2.5 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Ekrandaki Tabloyu Excel'e İndir">
                         <i class="fas fa-file-excel"></i>
                     </button>
                     <button id="saveBtn" onclick="saveChangesToGitHub()" disabled class="w-3/4 bg-slate-100 text-slate-300 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed shadow-sm">
@@ -256,12 +254,6 @@
     </div>
 
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl shadow-2xl text-white text-[11px] font-bold transition-all transform translate-y-20 opacity-0 z-[1100]"></div>
-
-    <footer class="py-4 text-center border-t border-slate-50 bg-white">
-        <p class="text-[9px] font-bold text-slate-300 tracking-[0.2em] uppercase italic">
-            © Gökhan ELGÜL tarafından tasarlanmıştır.
-        </p>
-    </footer>
 
     <script>
         const p1 = "ghp_1Im4128xUP1uC";
@@ -365,6 +357,14 @@
             return s.replace(/\D/g, '');
         }
 
+        function getPriorityColor(pStr) {
+            if (!pStr) return "#94a3b8"; 
+            if (pStr.includes("1.")) return "#4f46e5"; 
+            if (pStr.includes("2.")) return "#d97706"; 
+            if (pStr.includes("3.")) return "#dc2626"; // Güncellendi: 3. Öncelik Kırmızı
+            return "#94a3b8";
+        }
+
         function initMap() {
             map = L.map('map', {
                 center: [36.8, 34.6],
@@ -386,7 +386,7 @@
                 setTimeout(() => { 
                     map.invalidateSize(); 
                     if(geoLayer.getLayers().length > 0) {
-                        map.fitBounds(geoLayer.getBounds(), { padding: [50, 50], maxZoom: 18 });
+                        map.fitBounds(geoLayer.getBounds(), { padding: [50, 50] });
                     } else if(districtGlobalBounds && districtGlobalBounds.isValid()) {
                         map.fitBounds(districtGlobalBounds, { padding: [40, 40] });
                     }
@@ -644,6 +644,51 @@
             }
         }
 
+        // Güncellendi: Haritayı açmaya zorlamadan arka planda hazırlayan ve sınırları kalınlaştıran fonksiyon
+        function showFilteredOnMap() {
+            geoLayer.clearLayers();
+            let bounds = L.latLngBounds();
+            let hasBounds = false;
+
+            displayList.forEach(parsel => {
+                const cleanId = normalizeId(parsel["THA ID"]);
+                const coords = districtKMLs.get(cleanId);
+                
+                if(coords) {
+                    const priority = parsel["Tescil Önceliği"] || "";
+                    const color = getPriorityColor(priority);
+                    const status = parsel["Onay Durumu"] || "Bekliyor";
+                    const mahalle = parsel["Mahallesi"] || "-";
+                    
+                    const poly = L.polygon(coords, { 
+                        color: color, 
+                        fillColor: color, 
+                        fillOpacity: 0.45,
+                        weight: 4 // Çizgiler kalınlaştırıldı
+                    }).addTo(geoLayer);
+
+                    const popupContent = `
+                        <div class="popup-title">Parsel Bilgisi</div>
+                        <div class="popup-row"><span class="popup-label">ID:</span> <span class="popup-val">${cleanId}</span></div>
+                        <div class="popup-row"><span class="popup-label">Mahalle:</span> <span class="popup-val">${mahalle}</span></div>
+                        <div class="popup-row"><span class="popup-label">Öncelik:</span> <span class="popup-val" style="color:${color}">${priority}</span></div>
+                        <div class="popup-row"><span class="popup-label">Aşama:</span> <span class="popup-val">${status.toUpperCase()}</span></div>
+                    `;
+
+                    poly.bindPopup(popupContent);
+                    bounds.extend(poly.getBounds());
+                    hasBounds = true;
+                }
+            });
+
+            if(hasBounds) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+            } else {
+                showToast("Bu öncelikte haritada gösterilecek geometri bulunamadı.", "error");
+            }
+        }
+
+        // Güncellendi: Tıklanan parselin çizgi kalınlığı artırıldı
         function showOnMap(thaId) {
             const cleanId = normalizeId(thaId);
             const coords = districtKMLs.get(cleanId);
@@ -656,18 +701,19 @@
                 geoLayer.clearLayers();
                 
                 const parsel = currentData.find(p => normalizeId(p["THA ID"]) === cleanId);
+                const priority = parsel ? (parsel["Tescil Önceliği"] || "") : "";
+                const color = getPriorityColor(priority);
+                
                 const status = parsel ? (parsel["Onay Durumu"] || "Bekliyor") : "Bekliyor";
                 const mahalle = parsel ? (parsel["Mahallesi"] || "-") : "-";
                 const alan = parsel ? (parsel["Yüzölçümü (m²)"] || parsel["Yüzölçümü (m2)"] || "-") : "-";
                 const not = parsel ? (parsel["Kurum Bilgisi"] || "Not yok") : "-";
-                
-                const color = status === "Onaylandı(Firmaya İletildi)" ? "#10b981" : "#4338ca";
 
                 const poly = L.polygon(coords, { 
                     color: color, 
                     fillColor: color, 
                     fillOpacity: 0.45,
-                    weight: 3
+                    weight: 4 // Çizgi kalınlaştırıldı
                 }).addTo(geoLayer);
 
                 const popupContent = `
@@ -675,7 +721,8 @@
                     <div class="popup-row"><span class="popup-label">ID:</span> <span class="popup-val">${cleanId}</span></div>
                     <div class="popup-row"><span class="popup-label">Mahalle:</span> <span class="popup-val">${mahalle}</span></div>
                     <div class="popup-row"><span class="popup-label">Alan:</span> <span class="popup-val">${alan} m²</span></div>
-                    <div class="popup-row"><span class="popup-label">Aşama:</span> <span class="popup-val" style="color:${color}">${status.toUpperCase()}</span></div>
+                    <div class="popup-row"><span class="popup-label">Öncelik:</span> <span class="popup-val" style="color:${color}">${priority}</span></div>
+                    <div class="popup-row"><span class="popup-label">Aşama:</span> <span class="popup-val">${status.toUpperCase()}</span></div>
                     <div class="mt-2 pt-2 border-t text-[10px] text-slate-500">
                         <span class="font-bold">Kurum Notu:</span> ${not}
                     </div>
@@ -744,10 +791,11 @@
             renderNextPage();
         }
 
+        // Güncellendi: 3. Öncelik Kırmızı Stil
         function getPriorityStyle(pStr) {
             if(pStr.includes("1.")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
             if(pStr.includes("2.")) return "bg-amber-50 text-amber-700 border-amber-200";
-            if(pStr.includes("3.")) return "bg-slate-50 text-slate-700 border-slate-200";
+            if(pStr.includes("3.")) return "bg-red-50 text-red-700 border-red-200";
             return "bg-gray-50 text-gray-500 border-gray-200";
         }
 
@@ -938,12 +986,16 @@
             filterLocalData();
         }
 
+        // Güncellendi: Haritayı otomatik açmadan arka planda hazırlar
         function setPriorityFilter(p) {
             priorityFilter = p;
             specificStatusFilter = "all";
             districtLimitFilter = "all";
             updateCardHighlight(p === 'all' ? 'card-all' : p === 'processed' ? 'card-processed' : p === '1.' ? 'card-p1' : p === '2.' ? 'card-p2' : 'card-p3');
             filterLocalData();
+            if (p !== 'all' && p !== 'processed') {
+                showFilteredOnMap();
+            }
         }
 
         function setStatusFilter(status) {
