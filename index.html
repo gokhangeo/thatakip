@@ -166,7 +166,7 @@
                 <h3 id="statP3" class="text-xl md:text-2xl font-black text-slate-600 leading-none mt-1">0</h3>
             </div>
 
-            <!-- Yeni: Bugün Yapılan İşlem Kartı -->
+            <!-- Bugün Yapılan İşlem Kartı -->
             <div onclick="setTodayFilter()" id="card-today" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-sky-500">
                 <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
                     <p>Bugün Yapılan</p>
@@ -225,12 +225,12 @@
         <!-- Tablo Alanı -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col flex-grow relative">
             <div class="table-container overflow-auto custom-scrollbar" id="mainTableContainer">
-                <table class="w-full text-left border-collapse min-w-[1400px]">
+                <table class="w-full text-left border-collapse min-w-[1500px]">
                     <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-100">
                         <tr id="tableHeader"></tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50 text-xs md:text-sm">
-                        <tr><td colspan="11" class="py-24 text-center opacity-30 font-medium italic">Giriş yapıldıktan sonra veriler yüklenecektir.</td></tr>
+                        <tr><td colspan="12" class="py-24 text-center opacity-30 font-medium italic">Giriş yapıldıktan sonra veriler yüklenecektir.</td></tr>
                     </tbody>
                 </table>
                 <div id="loadMoreArea" class="p-4 text-center hidden">
@@ -555,7 +555,7 @@
             priorityFilter = "all";
             specificStatusFilter = "all";
             districtLimitFilter = "all";
-            document.getElementById('dateFilter').value = ""; // Tarihi sıfırla
+            document.getElementById('dateFilter').value = ""; 
             districtKMLs.clear(); 
             geoLayer.clearLayers();
             districtGlobalBounds = null;
@@ -704,8 +704,10 @@
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Harita</th>
                 ${isAll ? '<th class="p-3 md:p-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50/50">İlçe</th>' : ''}
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">THA ID</th>
+                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Öncelik</th>
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mahalle</th>
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alan (m²)</th>
+                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nitelik</th>
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Durum</th>
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aşama</th>
                 <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">İşlem Tarihi</th>
@@ -742,6 +744,13 @@
             renderNextPage();
         }
 
+        function getPriorityStyle(pStr) {
+            if(pStr.includes("1.")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
+            if(pStr.includes("2.")) return "bg-amber-50 text-amber-700 border-amber-200";
+            if(pStr.includes("3.")) return "bg-slate-50 text-slate-700 border-slate-200";
+            return "bg-gray-50 text-gray-500 border-gray-200";
+        }
+
         function renderNextPage() {
             const tbody = document.getElementById('tableBody');
             const start = (currentPage - 1) * pageSize;
@@ -750,7 +759,7 @@
             const isAllMode = currentDistrict === "ALL";
 
             if(chunk.length === 0 && currentPage === 1) {
-                tbody.innerHTML = `<tr><td colspan="11" class="py-24 text-center opacity-30 italic font-bold">Kayıt bulunamadı.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" class="py-24 text-center opacity-30 italic font-bold">Kayıt bulunamadı.</td></tr>`;
                 document.getElementById('loadMoreArea').classList.add('hidden');
                 return;
             }
@@ -761,6 +770,8 @@
                 const isFinal = status === "Onaylandı(Firmaya İletildi)";
                 const alan = row["Yüzölçümü (m²)"] || row["Yüzölçümü (m2)"] || row["Alan"] || "-";
                 const thaId = row["THA ID"] || "";
+                const priority = row["Tescil Önceliği"] || "-";
+                const nitelik = row["Nitelik"] || "-";
                 
                 return `
                 <tr id="row-${globalIndex}" class="transition-colors ${isFinal ? 'row-approved' : 'bg-white'} border-b border-slate-50 hover:bg-indigo-50/30 cursor-pointer" onclick="selectRow(${globalIndex})">
@@ -771,8 +782,14 @@
                     </td>
                     ${isAllMode ? `<td class="p-3 md:p-4 text-[10px] font-black text-indigo-700 bg-indigo-50/20">${row["_SOURCE_DISTRICT"]}</td>` : ''}
                     <td class="p-3 md:p-4 col-id text-[10px] md:text-xs">${thaId}</td>
+                    <td class="p-3 md:p-4">
+                        <span class="px-2 py-1 rounded text-[9px] font-bold border ${getPriorityStyle(priority)} whitespace-nowrap inline-block max-w-[100px] truncate" title="${priority}">
+                            ${priority}
+                        </span>
+                    </td>
                     <td class="p-3 md:p-4 font-semibold text-slate-700 truncate max-w-[120px]">${row["Mahallesi"] || '-'}</td>
                     <td class="p-3 md:p-4 col-alan font-mono text-[10px] md:text-xs font-bold">${alan}</td>
+                    <td class="p-3 md:p-4"><span class="text-[9px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded shadow-sm text-slate-600 whitespace-nowrap inline-block max-w-[80px] truncate" title="${nitelik}">${nitelik}</span></td>
                     <td class="p-3 md:p-4 text-center status-cell">
                         <span class="px-2 py-0.5 rounded-full text-[8px] md:text-[9px] shadow-sm ${getStatusColor(status)}">
                             ${status.toUpperCase()}
