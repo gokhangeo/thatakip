@@ -124,7 +124,7 @@
         <div id="map"></div>
 
         <!-- İstatistik Kartları -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6" id="statsContainer">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-6" id="statsContainer">
             <div class="relative group/total">
                 <div onclick="toggleTotalMenu()" id="card-all" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm active-filter h-full">
                     <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
@@ -164,6 +164,15 @@
             <div onclick="setPriorityFilter('3.')" id="card-p3" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-slate-400">
                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">3. Öncelik</p>
                 <h3 id="statP3" class="text-xl md:text-2xl font-black text-slate-600 leading-none mt-1">0</h3>
+            </div>
+
+            <!-- Yeni: Bugün Yapılan İşlem Kartı -->
+            <div onclick="setTodayFilter()" id="card-today" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-sky-500">
+                <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                    <p>Bugün Yapılan</p>
+                    <i class="fas fa-calendar-day text-sky-500"></i>
+                </div>
+                <h3 id="statToday" class="text-xl md:text-2xl font-black text-sky-600 leading-none mt-1">0</h3>
             </div>
         </div>
 
@@ -280,7 +289,6 @@
         let repoFilesCache = []; 
         let districtGlobalBounds = null;
 
-        // Sayfa Yüklendiğinde Oturum Kontrolü
         window.onload = () => {
             if (localStorage.getItem('tha_logged_in') === 'true') {
                 document.getElementById('loginScreen').style.display = 'none';
@@ -289,14 +297,13 @@
             }
         };
 
-        // Giriş İşlemi
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('loginUser').value;
             const pass = document.getElementById('loginPass').value;
 
             if (user === 'mersinkm' && pass === '503344') {
-                localStorage.setItem('tha_logged_in', 'true'); // Oturumu kaydet
+                localStorage.setItem('tha_logged_in', 'true');
                 const screen = document.getElementById('loginScreen');
                 screen.style.opacity = '0';
                 setTimeout(() => {
@@ -309,13 +316,11 @@
             }
         }
 
-        // Çıkış İşlemi
         function logout() {
             localStorage.removeItem('tha_logged_in');
             location.reload();
         }
 
-        // Excel İndirme İşlemi
         function exportToExcel() {
             if(displayList.length === 0) {
                 showToast("İndirilecek veri bulunamadı!", "error");
@@ -325,7 +330,6 @@
             toggleLoader(true, "Excel Dosyası Hazırlanıyor...");
             setTimeout(() => {
                 try {
-                    // İçerisine harita ikonları olan sütunu temizleyerek temiz veri listesi oluşturuyoruz
                     const exportData = displayList.map(({ _SOURCE_DISTRICT, ...rest }) => {
                         let obj = {};
                         if(currentDistrict === "ALL") obj["İlçe"] = _SOURCE_DISTRICT;
@@ -551,6 +555,7 @@
             priorityFilter = "all";
             specificStatusFilter = "all";
             districtLimitFilter = "all";
+            document.getElementById('dateFilter').value = ""; // Tarihi sıfırla
             districtKMLs.clear(); 
             geoLayer.clearLayers();
             districtGlobalBounds = null;
@@ -819,6 +824,10 @@
             document.getElementById('statP2').innerText = dataSource.filter(r => String(r["Tescil Önceliği"]).includes("2.")).length;
             document.getElementById('statP3').innerText = dataSource.filter(r => String(r["Tescil Önceliği"]).includes("3.")).length;
 
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayProcessed = dataSource.filter(r => r["İşlem Tarihi"] === todayStr).length;
+            document.getElementById('statToday').innerText = todayProcessed;
+
             const totalListEl = document.getElementById('totalDetailsList');
             const districtCounts = {};
             processedList.forEach(r => {
@@ -876,6 +885,7 @@
             currentData[index]["İşlem Tarihi"] = newDate;
             isModified = true;
             updateSaveButton();
+            updateStats(currentData);
         }
 
         function updateNote(index, val) {
@@ -888,6 +898,18 @@
         function debounceFilter() {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(filterLocalData, 300);
+        }
+
+        function setTodayFilter() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('dateFilter').value = todayStr;
+            priorityFilter = "all";
+            specificStatusFilter = "all";
+            districtLimitFilter = "all";
+            updateCardHighlight("card-today");
+            document.getElementById('totalMenu').classList.remove('show');
+            document.getElementById('processedMenu').classList.remove('show');
+            filterLocalData();
         }
 
         function setDistrictApprovedFilter(distName) {
@@ -917,8 +939,12 @@
         }
 
         function updateCardHighlight(id) {
-            ['card-all', 'card-processed', 'card-p1', 'card-p2', 'card-p3'].forEach(c => document.getElementById(c).classList.remove('active-filter'));
-            document.getElementById(id).classList.add('active-filter');
+            ['card-all', 'card-processed', 'card-p1', 'card-p2', 'card-p3', 'card-today'].forEach(c => {
+                const el = document.getElementById(c);
+                if(el) el.classList.remove('active-filter');
+            });
+            const target = document.getElementById(id);
+            if(target) target.classList.add('active-filter');
         }
 
         function getStatusColor(status) {
