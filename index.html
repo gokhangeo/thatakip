@@ -22,8 +22,8 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
         
-        .note-input, .status-select, .date-input { border: 1px solid #e2e8f0; transition: all 0.2s; font-size: 11px; }
-        .note-input:focus, .status-select:focus, .date-input:focus { border-color: #818cf8; background: white; outline: none; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1); }
+        .note-input, .status-select, .date-input, #mahalleSelect { border: 1px solid #e2e8f0; transition: all 0.2s; font-size: 11px; }
+        .note-input:focus, .status-select:focus, .date-input:focus, #mahalleSelect:focus { border-color: #818cf8; background: white; outline: none; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1); }
         
         .stat-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
         .stat-card.active-filter { ring: 3px solid #6366f1; ring-offset: 2px; }
@@ -52,6 +52,9 @@
 
         /* Giriş Ekranı */
         #loginScreen { transition: opacity 0.5s ease; }
+
+        /* Alt Tablo Animasyonu */
+        .subtable-row { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="bg-[#f8fafc] min-h-screen flex flex-col">
@@ -178,26 +181,26 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
             <button onclick="toggleSummaryPanel()" class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none">
                 <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
-                    <i class="fas fa-chart-pie text-indigo-500 text-sm"></i> İlçe Bazlı Öncelik ve Durum Özeti
+                    <i class="fas fa-chart-pie text-indigo-500 text-sm"></i> İlçe ve Mahalle Bazlı Öncelik Özeti
                 </div>
                 <div class="flex items-center gap-4">
                     <span onclick="event.stopPropagation(); exportSummaryToExcel()" class="bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center gap-1">
-                        <i class="fas fa-file-excel"></i> Özet İndir
+                        <i class="fas fa-file-excel"></i> Detaylı Özet İndir
                     </span>
                     <i id="summaryToggleIcon" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
                 </div>
             </button>
             <div id="summaryPanel" class="hidden border-t border-slate-100 bg-white">
-                <div class="overflow-x-auto custom-scrollbar max-h-[350px]">
+                <div class="overflow-x-auto custom-scrollbar max-h-[400px]">
                     <table class="w-full text-left border-collapse min-w-[600px]">
-                        <thead class="bg-slate-50 sticky top-0 z-10">
+                        <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th class="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">İlçe</th>
-                                <th class="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-center">Toplam Parsel</th>
-                                <th class="p-3 text-[10px] font-bold text-indigo-600 uppercase tracking-wider border-b border-slate-200 text-center bg-indigo-50/30">1. Öncelik</th>
-                                <th class="p-3 text-[10px] font-bold text-amber-600 uppercase tracking-wider border-b border-slate-200 text-center bg-amber-50/30">2. Öncelik</th>
-                                <th class="p-3 text-[10px] font-bold text-red-600 uppercase tracking-wider border-b border-slate-200 text-center bg-red-50/30">3. Öncelik</th>
-                                <th class="p-3 text-[10px] font-bold text-emerald-600 uppercase tracking-wider border-b border-slate-200 text-center bg-emerald-50/30">İşlem Yapılan</th>
+                                <th class="p-3 pl-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">İlçe / Mahalle</th>
+                                <th class="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-center w-24">Toplam</th>
+                                <th class="p-3 text-[10px] font-bold text-indigo-600 uppercase tracking-wider border-b border-slate-200 text-center bg-indigo-50/30 w-24">1. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-amber-600 uppercase tracking-wider border-b border-slate-200 text-center bg-amber-50/30 w-24">2. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-red-600 uppercase tracking-wider border-b border-slate-200 text-center bg-red-50/30 w-24">3. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-emerald-600 uppercase tracking-wider border-b border-slate-200 text-center bg-emerald-50/30 w-28">İşlem Yapılan</th>
                             </tr>
                         </thead>
                         <tbody id="summaryTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
@@ -210,10 +213,10 @@
 
         <!-- Üst Kontroller -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6">
-            <div class="md:col-span-3">
+            <div class="md:col-span-2">
                 <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">İlçe Seçimi</label>
                 <select id="districtSelect" onchange="checkChangesAndFetch()" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-sm">
-                    <option value="ALL">TÜM İLÇELER (MERSİN)</option>
+                    <option value="ALL">TÜM İLÇELER</option>
                     <option value="AKDENİZ">AKDENİZ</option>
                     <option value="ANAMUR">ANAMUR</option>
                     <option value="AYDINCIK">AYDINCIK</option>
@@ -228,7 +231,14 @@
                     <option value="YENİŞEHİR">YENİŞEHİR</option>
                 </select>
             </div>
-            <div class="md:col-span-4">
+            <!-- YENİ EKLENEN MAHALLE SEÇİMİ -->
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Mahalle Seçimi</label>
+                <select id="mahalleSelect" onchange="filterLocalData()" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-sm disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="ALL">TÜM MAHALLELER</option>
+                </select>
+            </div>
+            <div class="md:col-span-3">
                 <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Hızlı Arama</label>
                 <div class="relative">
                     <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"></i>
@@ -359,6 +369,7 @@
             }
         }
 
+        // YENİDEN YAZILAN: İlçe ilçe ayrılmış Excel indirme (Çok sayfalı)
         function exportSummaryToExcel() {
             if(currentData.length === 0) {
                 showToast("Dışa aktarılacak özet veri yok!", "error");
@@ -366,34 +377,91 @@
             }
 
             const districtGroups = {};
+
+            // Verileri grupla
             currentData.forEach(row => {
                 const dist = row["_SOURCE_DISTRICT"];
+                const mahalle = row["Mahallesi"] || "BİLİNMEYEN";
+                
                 if(!districtGroups[dist]) {
-                    districtGroups[dist] = { "İlçe Adı": dist, "Toplam Parsel": 0, "1. Öncelik": 0, "2. Öncelik": 0, "3. Öncelik": 0, "İşlem Yapılan (Tamamlanan)": 0 };
+                    districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0, mahalleler: {} };
                 }
-                districtGroups[dist]["Toplam Parsel"]++;
-
+                if(!districtGroups[dist].mahalleler[mahalle]) {
+                    districtGroups[dist].mahalleler[mahalle] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
+                }
+                
+                districtGroups[dist].total++;
+                districtGroups[dist].mahalleler[mahalle].total++;
+                
                 const p = String(row["Tescil Önceliği"] || "");
-                if(p.includes("1.")) districtGroups[dist]["1. Öncelik"]++;
-                else if(p.includes("2.")) districtGroups[dist]["2. Öncelik"]++;
-                else if(p.includes("3.")) districtGroups[dist]["3. Öncelik"]++;
+                if(p.includes("1.")) { districtGroups[dist].p1++; districtGroups[dist].mahalleler[mahalle].p1++; }
+                else if(p.includes("2.")) { districtGroups[dist].p2++; districtGroups[dist].mahalleler[mahalle].p2++; }
+                else if(p.includes("3.")) { districtGroups[dist].p3++; districtGroups[dist].mahalleler[mahalle].p3++; }
 
                 const st = String(row["Onay Durumu"] || "").trim();
                 if(st !== "" && st !== "Bekliyor") {
-                    districtGroups[dist]["İşlem Yapılan (Tamamlanan)"]++;
+                    districtGroups[dist].processed++;
+                    districtGroups[dist].mahalleler[mahalle].processed++;
                 }
             });
 
-            const exportData = Object.values(districtGroups).sort((a,b) => a["İlçe Adı"].localeCompare(b["İlçe Adı"]));
+            const workbook = XLSX.utils.book_new();
+            const districts = Object.keys(districtGroups).sort();
+
+            // 1. GENEL ÖZET SAYFASI
+            const genelOzetData = [];
+            districts.forEach(dist => {
+                genelOzetData.push({
+                    "İlçe": dist,
+                    "Toplam Parsel": districtGroups[dist].total,
+                    "1. Öncelik": districtGroups[dist].p1,
+                    "2. Öncelik": districtGroups[dist].p2,
+                    "3. Öncelik": districtGroups[dist].p3,
+                    "İşlem Yapılan": districtGroups[dist].processed
+                });
+            });
+            const wsGenel = XLSX.utils.json_to_sheet(genelOzetData);
+            XLSX.utils.book_append_sheet(workbook, wsGenel, "GENEL_OZET");
+
+            // 2. HER İLÇE İÇİN AYRI SAYFA
+            districts.forEach(dist => {
+                const distData = [];
+                const dStats = districtGroups[dist];
+                
+                // İlk satıra ilçenin genel toplamını ekle
+                distData.push({
+                    "Mahalle": "TÜMÜ (GENEL TOPLAM)",
+                    "Toplam Parsel": dStats.total,
+                    "1. Öncelik": dStats.p1,
+                    "2. Öncelik": dStats.p2,
+                    "3. Öncelik": dStats.p3,
+                    "İşlem Yapılan": dStats.processed
+                });
+
+                // Sonraki satırlara mahalleleri ekle
+                const mahalleler = Object.keys(dStats.mahalleler).sort();
+                mahalleler.forEach(m => {
+                    const mStats = dStats.mahalleler[m];
+                    distData.push({
+                        "Mahalle": m,
+                        "Toplam Parsel": mStats.total,
+                        "1. Öncelik": mStats.p1,
+                        "2. Öncelik": mStats.p2,
+                        "3. Öncelik": mStats.p3,
+                        "İşlem Yapılan": mStats.processed
+                    });
+                });
+
+                const wsDist = XLSX.utils.json_to_sheet(distData);
+                // Excel sayfa isimleri max 31 karakter olabilir, temizleyip ekliyoruz
+                let safeSheetName = dist.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '');
+                XLSX.utils.book_append_sheet(workbook, wsDist, safeSheetName);
+            });
 
             try {
-                const worksheet = XLSX.utils.json_to_sheet(exportData);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Ilce_Ozetleri");
-                
                 const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-                XLSX.writeFile(workbook, `THA_Ilce_Ozet_Raporu_${dateStr}.xlsx`);
-                showToast("Özet tablo başarıyla indirildi.");
+                XLSX.writeFile(workbook, `THA_Detayli_Ozet_Raporu_${dateStr}.xlsx`);
+                showToast("Detaylı özet tablo başarıyla indirildi.");
             } catch (error) {
                 showToast("İndirme sırasında bir hata oluştu.", "error");
             }
@@ -635,6 +703,27 @@
             }
         }
 
+        // YENİ EKLENEN: Mahalle dropdown doldurma
+        function populateMahalleDropdown() {
+            const mSelect = document.getElementById('mahalleSelect');
+            mSelect.innerHTML = '<option value="ALL">TÜM MAHALLELER</option>';
+            
+            // Eğer "TÜM İLÇELER" seçiliyse mahalleleri listelemeyelim (çok karışık olur)
+            if (currentDistrict === "ALL") {
+                mSelect.disabled = true;
+                return;
+            }
+            
+            mSelect.disabled = false;
+            
+            // Seçili ilçedeki benzersiz mahalle isimlerini al ve sırala
+            const uniqueMahalleler = [...new Set(currentData.map(item => item["Mahallesi"] || "BİLİNMEYEN"))].sort((a,b) => a.localeCompare(b));
+            
+            uniqueMahalleler.forEach(m => {
+                mSelect.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+        }
+
         async function fetchDistrictData() {
             const district = document.getElementById('districtSelect').value;
             currentDistrict = district;
@@ -642,6 +731,11 @@
             specificStatusFilter = "all";
             districtLimitFilter = "all";
             document.getElementById('dateFilter').value = ""; 
+            
+            // Her ilçe değişiminde mahalle seçimini de sıfırlıyoruz
+            const mSelect = document.getElementById('mahalleSelect');
+            mSelect.value = "ALL"; 
+            
             districtKMLs.clear(); 
             geoLayer.clearLayers();
             districtGlobalBounds = null;
@@ -707,6 +801,7 @@
                 }
 
                 isModified = false;
+                populateMahalleDropdown(); // Mahalle listesini doldur
                 updateStats(currentData);
                 updateSaveButton();
                 renderTableHeader();
@@ -849,6 +944,7 @@
         function filterLocalData() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const dateVal = document.getElementById('dateFilter').value;
+            const mahalleVal = document.getElementById('mahalleSelect').value; // YENİ MAHALLE DEĞERİ
             
             displayList = currentData.filter(row => {
                 if(priorityFilter === 'processed') {
@@ -860,7 +956,12 @@
                 } else if (priorityFilter !== 'all') {
                     if(!String(row["Tescil Önceliği"]).includes(priorityFilter)) return false;
                 }
+                
+                // Mahalle Filtresi
+                if(mahalleVal !== "ALL" && (row["Mahallesi"] || "BİLİNMEYEN") !== mahalleVal) return false;
+                
                 if(dateVal && row["İşlem Tarihi"] !== dateVal) return false;
+                
                 if(query) {
                     const match = String(row["Mahallesi"]).toLowerCase().includes(query) || 
                                   String(row["THA ID"]).includes(query) || 
@@ -960,37 +1061,58 @@
             if(row) row.classList.add('row-selected');
         }
 
-        // YENİ EKLENEN: Toggle için yardımcı fonksiyon
         function toggleDistrictFilter(dist) {
             const selectEl = document.getElementById('districtSelect');
             if(currentDistrict === dist) {
-                selectEl.value = 'ALL'; // Tekrar tıklanırsa TÜM İLÇELER'e dön
+                selectEl.value = 'ALL';
             } else {
                 selectEl.value = dist;
             }
             checkChangesAndFetch();
         }
 
-        // GÜNCELLENEN: İstatistik Tablosunu Dolduran Fonksiyon (Toggle eklendi)
+        function handleDistrictRowClick(dist) {
+            toggleDistrictFilter(dist);
+            
+            const subRow = document.getElementById('subrow-' + dist);
+            const icon = document.getElementById('icon-' + dist);
+            
+            if(subRow.classList.contains('hidden')) {
+                subRow.classList.remove('hidden');
+                icon.style.transform = 'rotate(90deg)';
+            } else {
+                subRow.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
         function updateSummaryPanel(dataSource) {
             const summaryBody = document.getElementById('summaryTableBody');
             const districtGroups = {};
 
             dataSource.forEach(row => {
                 const dist = row["_SOURCE_DISTRICT"];
+                const mahalle = row["Mahallesi"] || "BİLİNMEYEN";
+
                 if(!districtGroups[dist]) {
-                    districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
+                    districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0, mahalleler: {} };
                 }
+                if(!districtGroups[dist].mahalleler[mahalle]) {
+                    districtGroups[dist].mahalleler[mahalle] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
+                }
+                
                 districtGroups[dist].total++;
+                districtGroups[dist].mahalleler[mahalle].total++;
 
                 const p = String(row["Tescil Önceliği"] || "");
-                if(p.includes("1.")) districtGroups[dist].p1++;
-                else if(p.includes("2.")) districtGroups[dist].p2++;
-                else if(p.includes("3.")) districtGroups[dist].p3++;
+                if(p.includes("1.")) { districtGroups[dist].p1++; districtGroups[dist].mahalleler[mahalle].p1++; }
+                else if(p.includes("2.")) { districtGroups[dist].p2++; districtGroups[dist].mahalleler[mahalle].p2++; }
+                else if(p.includes("3.")) { districtGroups[dist].p3++; districtGroups[dist].mahalleler[mahalle].p3++; }
 
                 const st = String(row["Onay Durumu"] || "").trim();
                 if(st !== "" && st !== "Bekliyor") {
                     districtGroups[dist].processed++;
+                    districtGroups[dist].mahalleler[mahalle].processed++;
                 }
             });
 
@@ -1002,18 +1124,44 @@
 
             summaryBody.innerHTML = districts.map(dist => {
                 const stats = districtGroups[dist];
-                // Seçili olan satırı belirginleştir
                 const isActive = currentDistrict === dist;
                 const rowClass = isActive ? "bg-indigo-50/40 border-l-4 border-indigo-500" : "hover:bg-slate-50/50 transition-colors";
+                
+                const mList = Object.keys(stats.mahalleler).sort();
+                const mahalleHtml = mList.map(m => {
+                    const ms = stats.mahalleler[m];
+                    return `
+                        <tr class="bg-slate-50 border-b border-slate-100 hover:bg-slate-100 transition-colors">
+                            <td class="p-2 pl-10 text-[11px] font-medium text-slate-500"><i class="fas fa-level-up-alt fa-rotate-90 mr-2 text-slate-300"></i>${m}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-slate-500 w-24">${ms.total}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-indigo-500 w-24">${ms.p1}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-amber-500 w-24">${ms.p2}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-red-500 w-24">${ms.p3}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-emerald-500 w-28">${ms.processed}</td>
+                        </tr>
+                    `;
+                }).join('');
 
                 return `
-                    <tr class="${rowClass} cursor-pointer" onclick="toggleDistrictFilter('${dist}')">
-                        <td class="p-3 font-bold text-slate-700">${dist}</td>
-                        <td class="p-3 text-center font-bold text-slate-600">${stats.total}</td>
-                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/10">${stats.p1}</td>
-                        <td class="p-3 text-center font-bold text-amber-600 bg-amber-50/10">${stats.p2}</td>
-                        <td class="p-3 text-center font-bold text-red-600 bg-red-50/10">${stats.p3}</td>
-                        <td class="p-3 text-center font-bold text-emerald-600 bg-emerald-50/10">${stats.processed}</td>
+                    <tr class="${rowClass} cursor-pointer" onclick="handleDistrictRowClick('${dist}')">
+                        <td class="p-3 font-bold text-slate-700 flex items-center gap-2">
+                            <i id="icon-${dist}" class="fas fa-chevron-right text-[10px] text-slate-400 transition-transform ${isActive ? 'rotate-90' : ''}"></i>
+                            ${dist}
+                        </td>
+                        <td class="p-3 text-center font-bold text-slate-600 w-24">${stats.total}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/10 w-24">${stats.p1}</td>
+                        <td class="p-3 text-center font-bold text-amber-600 bg-amber-50/10 w-24">${stats.p2}</td>
+                        <td class="p-3 text-center font-bold text-red-600 bg-red-50/10 w-24">${stats.p3}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 bg-emerald-50/10 w-28">${stats.processed}</td>
+                    </tr>
+                    <tr id="subrow-${dist}" class="subtable-row ${isActive ? '' : 'hidden'}">
+                        <td colspan="6" class="p-0">
+                            <table class="w-full text-left">
+                                <tbody>
+                                    ${mahalleHtml}
+                                </tbody>
+                            </table>
+                        </td>
                     </tr>
                 `;
             }).join('');
