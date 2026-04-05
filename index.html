@@ -139,7 +139,7 @@
             </div>
             
             <div class="relative group/processed">
-                <div onclick="toggleProcessedMenu()" id="card-processed" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500 h-full">
+                <div onclick="toggleProcessedMenu()" id="card-processed" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-50 h-full">
                     <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
                         <p>İşlem Yapılan</p>
                         <i class="fas fa-chevron-down"></i>
@@ -171,6 +171,40 @@
                     <i class="fas fa-calendar-day text-sky-500"></i>
                 </div>
                 <h3 id="statToday" class="text-xl md:text-2xl font-black text-sky-600 leading-none mt-1">0</h3>
+            </div>
+        </div>
+
+        <!-- YENİ: İlçe Özet Raporu (Açılır Kapanır) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
+            <button onclick="toggleSummaryPanel()" class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none">
+                <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
+                    <i class="fas fa-chart-pie text-indigo-500 text-sm"></i> İlçe Bazlı Öncelik ve Durum Özeti
+                </div>
+                <div class="flex items-center gap-4">
+                    <span onclick="event.stopPropagation(); exportSummaryToExcel()" class="bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center gap-1">
+                        <i class="fas fa-file-excel"></i> Özet İndir
+                    </span>
+                    <i id="summaryToggleIcon" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
+                </div>
+            </button>
+            <div id="summaryPanel" class="hidden border-t border-slate-100 bg-white">
+                <div class="overflow-x-auto custom-scrollbar max-h-[350px]">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead class="bg-slate-50 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">İlçe</th>
+                                <th class="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 text-center">Toplam Parsel</th>
+                                <th class="p-3 text-[10px] font-bold text-indigo-600 uppercase tracking-wider border-b border-slate-200 text-center bg-indigo-50/30">1. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-amber-600 uppercase tracking-wider border-b border-slate-200 text-center bg-amber-50/30">2. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-red-600 uppercase tracking-wider border-b border-slate-200 text-center bg-red-50/30">3. Öncelik</th>
+                                <th class="p-3 text-[10px] font-bold text-emerald-600 uppercase tracking-wider border-b border-slate-200 text-center bg-emerald-50/30">İşlem Yapılan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+                            <!-- JS ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -313,6 +347,60 @@
             location.reload();
         }
 
+        // YENİ EKLENEN: Özet Tablo Paneli Aç/Kapat
+        function toggleSummaryPanel() {
+            const panel = document.getElementById('summaryPanel');
+            const icon = document.getElementById('summaryToggleIcon');
+            if(panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                panel.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // YENİ EKLENEN: Özet Tablo Verisini Excel'e Aktar
+        function exportSummaryToExcel() {
+            if(currentData.length === 0) {
+                showToast("Dışa aktarılacak özet veri yok!", "error");
+                return;
+            }
+
+            const districtGroups = {};
+            currentData.forEach(row => {
+                const dist = row["_SOURCE_DISTRICT"];
+                if(!districtGroups[dist]) {
+                    districtGroups[dist] = { "İlçe Adı": dist, "Toplam Parsel": 0, "1. Öncelik": 0, "2. Öncelik": 0, "3. Öncelik": 0, "İşlem Yapılan (Tamamlanan)": 0 };
+                }
+                districtGroups[dist]["Toplam Parsel"]++;
+
+                const p = String(row["Tescil Önceliği"] || "");
+                if(p.includes("1.")) districtGroups[dist]["1. Öncelik"]++;
+                else if(p.includes("2.")) districtGroups[dist]["2. Öncelik"]++;
+                else if(p.includes("3.")) districtGroups[dist]["3. Öncelik"]++;
+
+                const st = String(row["Onay Durumu"] || "").trim();
+                if(st !== "" && st !== "Bekliyor") {
+                    districtGroups[dist]["İşlem Yapılan (Tamamlanan)"]++;
+                }
+            });
+
+            const exportData = Object.values(districtGroups).sort((a,b) => a["İlçe Adı"].localeCompare(b["İlçe Adı"]));
+
+            try {
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Ilce_Ozetleri");
+                
+                const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                XLSX.writeFile(workbook, `THA_Ilce_Ozet_Raporu_${dateStr}.xlsx`);
+                showToast("Özet tablo başarıyla indirildi.");
+            } catch (error) {
+                showToast("İndirme sırasında bir hata oluştu.", "error");
+            }
+        }
+
         function exportToExcel() {
             if(displayList.length === 0) {
                 showToast("İndirilecek veri bulunamadı!", "error");
@@ -361,7 +449,7 @@
             if (!pStr) return "#94a3b8"; 
             if (pStr.includes("1.")) return "#4f46e5"; 
             if (pStr.includes("2.")) return "#d97706"; 
-            if (pStr.includes("3.")) return "#dc2626"; // Güncellendi: 3. Öncelik Kırmızı
+            if (pStr.includes("3.")) return "#dc2626"; 
             return "#94a3b8";
         }
 
@@ -644,7 +732,6 @@
             }
         }
 
-        // Güncellendi: Haritayı açmaya zorlamadan arka planda hazırlayan ve sınırları kalınlaştıran fonksiyon
         function showFilteredOnMap() {
             geoLayer.clearLayers();
             let bounds = L.latLngBounds();
@@ -664,7 +751,7 @@
                         color: color, 
                         fillColor: color, 
                         fillOpacity: 0.45,
-                        weight: 4 // Çizgiler kalınlaştırıldı
+                        weight: 4 
                     }).addTo(geoLayer);
 
                     const popupContent = `
@@ -688,7 +775,6 @@
             }
         }
 
-        // Güncellendi: Tıklanan parselin çizgi kalınlığı artırıldı
         function showOnMap(thaId) {
             const cleanId = normalizeId(thaId);
             const coords = districtKMLs.get(cleanId);
@@ -713,7 +799,7 @@
                     color: color, 
                     fillColor: color, 
                     fillOpacity: 0.45,
-                    weight: 4 // Çizgi kalınlaştırıldı
+                    weight: 4 
                 }).addTo(geoLayer);
 
                 const popupContent = `
@@ -791,7 +877,6 @@
             renderNextPage();
         }
 
-        // Güncellendi: 3. Öncelik Kırmızı Stil
         function getPriorityStyle(pStr) {
             if(pStr.includes("1.")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
             if(pStr.includes("2.")) return "bg-amber-50 text-amber-700 border-amber-200";
@@ -877,6 +962,50 @@
             if(row) row.classList.add('row-selected');
         }
 
+        // YENİ EKLENEN: İstatistik Tablosunu Dolduran Fonksiyon
+        function updateSummaryPanel(dataSource) {
+            const summaryBody = document.getElementById('summaryTableBody');
+            const districtGroups = {};
+
+            dataSource.forEach(row => {
+                const dist = row["_SOURCE_DISTRICT"];
+                if(!districtGroups[dist]) {
+                    districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
+                }
+                districtGroups[dist].total++;
+
+                const p = String(row["Tescil Önceliği"] || "");
+                if(p.includes("1.")) districtGroups[dist].p1++;
+                else if(p.includes("2.")) districtGroups[dist].p2++;
+                else if(p.includes("3.")) districtGroups[dist].p3++;
+
+                const st = String(row["Onay Durumu"] || "").trim();
+                if(st !== "" && st !== "Bekliyor") {
+                    districtGroups[dist].processed++;
+                }
+            });
+
+            const districts = Object.keys(districtGroups).sort();
+            if(districts.length === 0) {
+                summaryBody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-medium">Özet veri bulunamadı.</td></tr>`;
+                return;
+            }
+
+            summaryBody.innerHTML = districts.map(dist => {
+                const stats = districtGroups[dist];
+                return `
+                    <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="document.getElementById('districtSelect').value='${dist}'; checkChangesAndFetch();">
+                        <td class="p-3 font-bold text-slate-700">${dist}</td>
+                        <td class="p-3 text-center font-bold text-slate-600">${stats.total}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/10">${stats.p1}</td>
+                        <td class="p-3 text-center font-bold text-amber-600 bg-amber-50/10">${stats.p2}</td>
+                        <td class="p-3 text-center font-bold text-red-600 bg-red-50/10">${stats.p3}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 bg-emerald-50/10">${stats.processed}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function updateStats(dataSource) {
             const processedList = dataSource.filter(r => {
                 const st = String(r["Onay Durumu"] || "").trim();
@@ -917,6 +1046,9 @@
                     </button>
                 `;
             }).join('');
+
+            // Paneli güncelle
+            updateSummaryPanel(dataSource);
         }
 
         function updateRowStatus(index, newStatus) {
@@ -986,7 +1118,6 @@
             filterLocalData();
         }
 
-        // Güncellendi: Haritayı otomatik açmadan arka planda hazırlar
         function setPriorityFilter(p) {
             priorityFilter = p;
             specificStatusFilter = "all";
