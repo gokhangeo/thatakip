@@ -174,7 +174,7 @@
             </div>
         </div>
 
-        <!-- YENİ: İlçe Özet Raporu (Açılır Kapanır) -->
+        <!-- İlçe Özet Raporu (Açılır Kapanır) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6 overflow-hidden">
             <button onclick="toggleSummaryPanel()" class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 hover:bg-slate-100 transition-colors focus:outline-none">
                 <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
@@ -347,7 +347,6 @@
             location.reload();
         }
 
-        // YENİ EKLENEN: Özet Tablo Paneli Aç/Kapat
         function toggleSummaryPanel() {
             const panel = document.getElementById('summaryPanel');
             const icon = document.getElementById('summaryToggleIcon');
@@ -360,7 +359,6 @@
             }
         }
 
-        // YENİ EKLENEN: Özet Tablo Verisini Excel'e Aktar
         function exportSummaryToExcel() {
             if(currentData.length === 0) {
                 showToast("Dışa aktarılacak özet veri yok!", "error");
@@ -962,7 +960,18 @@
             if(row) row.classList.add('row-selected');
         }
 
-        // YENİ EKLENEN: İstatistik Tablosunu Dolduran Fonksiyon
+        // YENİ EKLENEN: Toggle için yardımcı fonksiyon
+        function toggleDistrictFilter(dist) {
+            const selectEl = document.getElementById('districtSelect');
+            if(currentDistrict === dist) {
+                selectEl.value = 'ALL'; // Tekrar tıklanırsa TÜM İLÇELER'e dön
+            } else {
+                selectEl.value = dist;
+            }
+            checkChangesAndFetch();
+        }
+
+        // GÜNCELLENEN: İstatistik Tablosunu Dolduran Fonksiyon (Toggle eklendi)
         function updateSummaryPanel(dataSource) {
             const summaryBody = document.getElementById('summaryTableBody');
             const districtGroups = {};
@@ -993,8 +1002,12 @@
 
             summaryBody.innerHTML = districts.map(dist => {
                 const stats = districtGroups[dist];
+                // Seçili olan satırı belirginleştir
+                const isActive = currentDistrict === dist;
+                const rowClass = isActive ? "bg-indigo-50/40 border-l-4 border-indigo-500" : "hover:bg-slate-50/50 transition-colors";
+
                 return `
-                    <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="document.getElementById('districtSelect').value='${dist}'; checkChangesAndFetch();">
+                    <tr class="${rowClass} cursor-pointer" onclick="toggleDistrictFilter('${dist}')">
                         <td class="p-3 font-bold text-slate-700">${dist}</td>
                         <td class="p-3 text-center font-bold text-slate-600">${stats.total}</td>
                         <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/10">${stats.p1}</td>
