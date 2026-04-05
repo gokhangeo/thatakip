@@ -344,7 +344,8 @@
         const DISTRICTS = ["AKDENİZ", "ANAMUR", "AYDINCIK", "BOZYAZI", "ÇAMLIYAYLA", "ERDEMLİ", "GÜLNAR", "MEZİTLİ", "MUT", "SİLİFKE", "TARSUS", "TOROSLAR", "YENİŞEHİR"];
         const STAGES = ["Bekliyor", "Onaylandı(Firmaya İletildi)", "Dosya Hazırlandı", "Bakanlığa Gönderildi", "Bakanlıktan Geldi", "Kurum Görüşü Soruldu", "Kurum Görüşleri Tamamlandı", "Tescile Gönderildi"];
 
-        let personnelMap = {};
+        let personnelIdMap = {};
+        let personnelMahalleMap = {};
         let currentData = []; 
         let displayList = []; 
         let districtFileShas = {};
@@ -422,14 +423,27 @@
                     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                     const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
 
+                    personnelIdMap = {};
+                    personnelMahalleMap = {};
+
                     data.forEach(row => {
                         const ilce = String(row["İlçe"] || "").trim().toUpperCase();
                         const mahalle = String(row["Mahalle"] || "").trim().toUpperCase();
                         const tekniker = String(row["Tekniker"] || "").trim();
                         const muhendis = String(row["Sorumlu Mühendis"] || "").trim();
+                        const idListesi = String(row["ID Listesi"] || "").trim();
 
                         if (ilce && mahalle) {
-                            personnelMap[`${ilce}_${mahalle}`] = { t: tekniker, m: muhendis };
+                            personnelMahalleMap[`${ilce}_${mahalle}`] = { t: tekniker, m: muhendis };
+                        }
+
+                        if (idListesi) {
+                            const ids = idListesi.split(',').map(id => normalizeId(id));
+                            ids.forEach(id => {
+                                if (id) {
+                                    personnelIdMap[id] = { t: tekniker, m: muhendis };
+                                }
+                            });
                         }
                     });
                 }
@@ -813,7 +827,9 @@
             
             tSelect.disabled = false;
             
-            const uniqueTeknikerler = [...new Set(currentData.map(item => item["Tekniker"] || "Bilinmiyor"))].filter(t => t !== "Bilinmiyor").sort((a,b) => a.localeCompare(b));
+            const uniqueTeknikerler = [...new Set(currentData.map(item => item["Tekniker"] || "Bilinmiyor"))]
+                .filter(t => t !== "Bilinmiyor" && t !== "-")
+                .sort((a,b) => a.localeCompare(b));
             
             uniqueTeknikerler.forEach(t => {
                 tSelect.innerHTML += `<option value="${t}">${t}</option>`;
@@ -879,8 +895,20 @@
                                 }
 
                                 return data.map(item => {
+                                    const pId = normalizeId(item["THA ID"]);
                                     const pKey = `${d}_${(item["Mahallesi"] || "").toUpperCase().trim()}`;
-                                    const pInfo = personnelMap[pKey] || { t: "Bilinmiyor", m: "Bilinmiyor" };
+                                    const oncelik = String(item["Tescil Önceliği"] || "");
+                                    const nitelik = String(item["Nitelik"] || "").toUpperCase().replace(/\s+/g, '');
+                                    
+                                    let pInfo = { t: "-", m: "-" };
+
+                                    // Sadece 1. öncelik DEĞİLSE ve 2B DEĞİLSE personel ata
+                                    if (!oncelik.includes("1.") && !nitelik.includes("2B")) {
+                                        pInfo = personnelIdMap[pId];
+                                        if (!pInfo) {
+                                            pInfo = personnelMahalleMap[pKey] || { t: "Bilinmiyor", m: "Bilinmiyor" };
+                                        }
+                                    }
                                     
                                     return { 
                                         ...item, 
@@ -1283,6 +1311,11 @@
             const persGroups = {};
 
             dataSource.forEach(row => {
+                const p = String(row["Tescil Önceliği"] || "");
+                const n = String(row["Nitelik"] || "").toUpperCase().replace(/\s+/g, '');
+                
+                if (p.includes("1.") || n.includes("2B")) return;
+
                 let tek = row["Tekniker"] || "Bilinmiyor";
                 let muh = row["Sorumlu Mühendis"] || "Bilinmiyor";
                 
