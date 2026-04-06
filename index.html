@@ -413,12 +413,7 @@
                     return;
                 }
 
-                const response = await fetch(fileObj.url, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3.raw'
-                    }
-                });
+                const response = await fetch(fileObj.download_url);
 
                 if (response.ok) {
                     const arrayBuffer = await response.arrayBuffer();
@@ -730,12 +725,7 @@
             if (!fileObj) return null;
             
             try {
-                const response = await fetch(fileObj.url, { 
-                    headers: { 
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3.raw'
-                    } 
-                });
+                const response = await fetch(fileObj.download_url);
                 if(!response.ok) return null;
                 const kmlContent = await response.text();
                 
@@ -872,12 +862,7 @@
                         
                         if(fileObj) {
                             districtFileShas[d] = fileObj.sha;
-                            const response = await fetch(fileObj.url, { 
-                                headers: { 
-                                    'Authorization': `token ${GITHUB_TOKEN}`,
-                                    'Accept': 'application/vnd.github.v3.raw'
-                                } 
-                            });
+                            const response = await fetch(fileObj.download_url);
                             
                             if(response.ok) {
                                 const arrayBuffer = await response.arrayBuffer();
@@ -904,7 +889,6 @@
                                     
                                     let pInfo = { t: "-", m: "-" };
 
-                                    // Sadece 1. öncelik DEĞİLSE ve 2B DEĞİLSE personel ata
                                     if (!oncelik.includes("1.") && !nitelik.includes("2B")) {
                                         pInfo = personnelIdMap[pId];
                                         if (!pInfo) {
