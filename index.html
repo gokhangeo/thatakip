@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THA İş Durumu Takip Paneli</title>
+    <title>İKA İş Durumu Takip Paneli</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet Harita Kütüphanesi -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -22,38 +19,17 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
         
-        .note-input, .status-select, .date-input, #mahalleSelect, #teknikerSelect, .ika-input { border: 1px solid #e2e8f0; transition: all 0.2s; font-size: 11px; }
-        .note-input:focus, .status-select:focus, .date-input:focus, #mahalleSelect:focus, #teknikerSelect:focus, .ika-input:focus { border-color: #818cf8; background: white; outline: none; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1); }
+        .ika-input, #ikaDistrictSelect, #ikaSearchInput, #mahalleSelect, #teknikerSelect { border: 1px solid #e2e8f0; transition: all 0.2s; font-size: 11px; }
+        .ika-input:focus, #ikaDistrictSelect:focus, #ikaSearchInput:focus, #mahalleSelect:focus, #teknikerSelect:focus { border-color: #818cf8; background: white; outline: none; box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1); }
         
-        .stat-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
-        .stat-card.active-filter { ring: 3px solid #6366f1; ring-offset: 2px; }
-        
+        .stat-card { transition: all 0.3s ease; position: relative; overflow: hidden; }
         .col-id { color: #4338ca; font-weight: 700; background-color: rgba(245, 247, 255, 0.6); }
-        .col-alan { color: #b45309; font-weight: 700; background-color: rgba(255, 251, 235, 0.6); }
-
-        .dropdown-menu { display: none; transform-origin: top; animation: slideIn 0.2s ease-out; }
-        .dropdown-menu.show { display: block; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .blink-warning { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* Harita Başlangıçta Kapalı */
-        #map { height: 0; border-radius: 1rem; border: none; margin-bottom: 0; z-index: 10; transition: height 0.4s ease-in-out, opacity 0.4s ease-in-out; opacity: 0; pointer-events: none; }
-        #map.map-visible { height: 400px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem; opacity: 1; pointer-events: auto; }
-        
-        .row-selected { background-color: #e0e7ff !important; border-left: 4px solid #4338ca !important; }
-        
-        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 2px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .popup-title { font-weight: 800; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; color: #4338ca; font-size: 13px; }
-        .popup-row { font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
-        .popup-label { font-weight: 600; color: #64748b; }
-        .popup-val { font-weight: 700; color: #1e293b; text-align: right; }
-
         /* Giriş Ekranı */
         #loginScreen { transition: opacity 0.5s ease; }
-
-        /* Alt Tablo Animasyonu */
         .subtable-row { transition: all 0.3s ease; }
     </style>
 </head>
@@ -67,7 +43,7 @@
                 <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                     <i class="fas fa-lock"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800">Mersin THA Takip Sistemi</h2>
+                <h2 class="text-2xl font-bold text-slate-800">İKA Takip Sistemi</h2>
                 <p class="text-xs text-slate-500 mt-1 uppercase tracking-widest font-semibold">Mersin Kadastro Müdürlüğü</p>
                 <p class="text-[9px] text-slate-400 font-medium italic mt-1">© Gökhan ELGÜL tarafından tasarlanmıştır.</p>
             </div>
@@ -99,28 +75,15 @@
         <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-600 p-2 rounded-lg text-white shadow-lg">
-                    <i class="fas fa-landmark text-lg"></i>
+                    <i class="fas fa-list-check text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-base md:text-lg font-bold text-slate-800 leading-tight">İş Takip Sistemi</h1>
+                    <h1 class="text-base md:text-lg font-bold text-slate-800 leading-tight">İKA Takip Sistemi</h1>
                     <p class="text-[9px] md:text-[10px] text-indigo-600 font-bold uppercase tracking-widest">MERSİN KADASTRO MÜDÜRLÜĞÜ</p>
                 </div>
             </div>
-            
-            <!-- SEKME MENÜSÜ -->
-            <div class="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
-                <button id="tabThaBtn" onclick="switchTab('THA')" class="px-6 py-2 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm">
-                    <i class="fas fa-layer-group mr-1"></i> THA TAKİP
-                </button>
-                <button id="tabIkaBtn" onclick="switchTab('IKA')" class="px-6 py-2 rounded-lg text-xs font-bold transition-all bg-transparent text-slate-600 hover:bg-slate-200">
-                    <i class="fas fa-list-check mr-1"></i> İKA TAKİP
-                </button>
-            </div>
 
             <div class="flex items-center gap-4">
-                <div id="connectionStatus" class="text-[10px] font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-400 flex items-center gap-2">
-                    <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> BAĞLANTI YOK
-                </div>
                 <button onclick="logout()" class="bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
                     <i class="fas fa-sign-out-alt"></i> ÇIKIŞ
                 </button>
@@ -130,68 +93,33 @@
 
     <main class="max-w-[1600px] mx-auto w-full p-3 md:p-4 flex-grow flex flex-col relative">
         
-        <!-- THA GÖRÜNÜMÜ -->
-        <div id="thaView" class="flex flex-col flex-grow">
-            <div class="flex justify-end mb-2">
-                <button onclick="toggleMapManual()" class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
-                    <i class="fas fa-satellite"></i> HARİTA <span id="mapToggleText">AÇ</span>
-                </button>
-            </div>
+        <div id="ikaView" class="flex flex-col flex-grow">
             
-            <div id="map"></div>
-
-            <!-- İstatistik Kartları -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-6" id="statsContainer">
-                <div class="relative group/total">
-                    <div onclick="toggleTotalMenu()" id="card-all" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm active-filter h-full">
-                        <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                            <p>Toplam Parsel</p>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <h3 id="statTotal" class="text-xl md:text-2xl font-black text-slate-800 leading-none mt-1">0</h3>
-                    </div>
-                    <div id="totalMenu" class="dropdown-menu absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] p-2 min-w-[220px]">
-                        <div class="text-[10px] font-bold text-slate-400 p-2 border-b border-slate-50 uppercase mb-1 italic">İlçe Bazlı Onaylananlar</div>
-                        <div id="totalDetailsList" class="space-y-1 max-h-[250px] overflow-y-auto custom-scrollbar"></div>
-                    </div>
+            <!-- İKA İstatistikleri -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-slate-400">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Toplam İKA</p>
+                    <h3 id="ikaStatTotal" class="text-xl font-black text-slate-600 mt-1">0</h3>
                 </div>
-                
-                <div class="relative group/processed">
-                    <div onclick="toggleProcessedMenu()" id="card-processed" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-50 h-full">
-                        <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                            <p>İşlem Yapılan</p>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <h3 id="statApproved" class="text-xl md:text-2xl font-black text-emerald-600 leading-none mt-1">0</h3>
-                    </div>
-                    <div id="processedMenu" class="dropdown-menu absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] p-2 min-w-[200px]">
-                        <div class="text-[10px] font-bold text-slate-400 p-2 border-b border-slate-50 uppercase mb-1">Aşama Detayları</div>
-                        <div id="stageDetailsList" class="space-y-1"></div>
-                    </div>
+                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-indigo-500 cursor-pointer hover:bg-slate-50" onclick="toggleIkaTable('1')">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">1. Öncelik İKA</p>
+                    <h3 id="ikaStat1" class="text-xl font-black text-indigo-600 mt-1">0</h3>
                 </div>
-
-                <div onclick="setPriorityFilter('1.')" id="card-p1" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-indigo-500">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">1. Öncelik</p>
-                    <h3 id="statP1" class="text-xl md:text-2xl font-black text-indigo-600 leading-none mt-1">0</h3>
+                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500 cursor-pointer hover:bg-slate-50" onclick="toggleIkaTable('2')">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">2. Öncelik İKA</p>
+                    <h3 id="ikaStat2" class="text-xl font-black text-amber-600 mt-1">0</h3>
                 </div>
-                <div onclick="setPriorityFilter('2.')" id="card-p2" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">2. Öncelik</p>
-                    <h3 id="statP2" class="text-xl md:text-2xl font-black text-amber-600 leading-none mt-1">0</h3>
+                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-red-500 cursor-pointer hover:bg-slate-50" onclick="toggleIkaTable('3')">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">3. Öncelik İKA</p>
+                    <h3 id="ikaStat3" class="text-xl font-black text-red-600 mt-1">0</h3>
                 </div>
-                <div onclick="setPriorityFilter('3.')" id="card-p3" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-red-500">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">3. Öncelik</p>
-                    <h3 id="statP3" class="text-xl md:text-2xl font-black text-red-600 leading-none mt-1">0</h3>
-                </div>
-
-                <div onclick="setTodayFilter()" id="card-today" class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-sky-500">
-                    <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                        <p>Bugün Yapılan</p>
-                        <i class="fas fa-calendar-day text-sky-500"></i>
-                    </div>
-                    <h3 id="statToday" class="text-xl md:text-2xl font-black text-sky-600 leading-none mt-1">0</h3>
+                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">İşlem Yapılan (Teslim Edilen)</p>
+                    <h3 id="ikaStatProcessed" class="text-xl font-black text-emerald-600 mt-1">0</h3>
                 </div>
             </div>
 
+            <!-- Paneller: İlçe Özeti ve Personel Özeti -->
             <div class="grid grid-cols-1 gap-6 mb-6">
                 <!-- İlçe Özet Raporu (Açılır Kapanır) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden w-full">
@@ -255,124 +183,10 @@
                 </div>
             </div>
 
-            <!-- Üst Kontroller -->
+            <!-- Filtre ve Arama Kontrolleri -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6">
                 <div class="md:col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">İlçe Seçimi</label>
-                    <select id="districtSelect" onchange="checkChangesAndFetch()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs">
-                        <option value="ALL">TÜM İLÇELER</option>
-                        <option value="AKDENİZ">AKDENİZ</option>
-                        <option value="ANAMUR">ANAMUR</option>
-                        <option value="AYDINCIK">AYDINCIK</option>
-                        <option value="BOZYAZI">BOZYAZI</option>
-                        <option value="ÇAMLIYAYLA">ÇAMLIYAYLA</option>
-                        <option value="ERDEMLİ">ERDEMLİ</option>
-                        <option value="GÜLNAR">GÜLNAR</option>
-                        <option value="MEZİTLİ">MEZİTLİ</option>
-                        <option value="MUT">MUT</option>
-                        <option value="SİLİFKE">SİLİFKE</option>
-                        <option value="TARSUS">TARSUS</option>
-                        <option value="TOROSLAR">TOROSLAR</option>
-                        <option value="YENİŞEHİR">YENİŞEHİR</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Mahalle Seçimi</label>
-                    <select id="mahalleSelect" onchange="filterLocalData()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs disabled:bg-slate-50 disabled:text-slate-400">
-                        <option value="ALL">TÜM MAHALLELER</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Tekniker Seçimi</label>
-                    <select id="teknikerSelect" onchange="filterLocalData()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs">
-                        <option value="ALL">TÜM TEKNİKERLER</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Hızlı Arama</label>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input type="text" id="searchInput" oninput="debounceFilter()" placeholder="ID veya Not..." class="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="text-[10px] font-bold text-indigo-600 uppercase mb-1 block ml-1 tracking-tight italic">Tarih Filtresi</label>
-                    <input type="date" id="dateFilter" onchange="filterLocalData()" class="w-full px-3 py-2 bg-white border border-indigo-100 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700 text-xs">
-                </div>
-                <div class="md:col-span-2 flex flex-col justify-end gap-1">
-                    <div class="flex gap-2 w-full">
-                        <button onclick="exportToExcel()" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Ekrandaki Tabloyu Excel'e İndir">
-                            <i class="fas fa-file-excel"></i>
-                        </button>
-                        <button id="saveBtn" onclick="saveChangesToGitHub()" disabled class="w-3/4 bg-slate-100 text-slate-300 font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed shadow-sm text-xs">
-                            <i class="fas fa-save"></i> Kaydet
-                        </button>
-                    </div>
-                    <div id="btnWarning" class="hidden blink-warning text-[9px] font-bold text-red-600 text-center uppercase tracking-tighter mt-1">
-                        <i class="fas fa-exclamation-triangle"></i> Kaydedilmedi
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tablo Alanı -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col flex-grow relative">
-                <div class="table-container overflow-auto custom-scrollbar" id="mainTableContainer">
-                    <table class="w-full text-left border-collapse min-w-[1600px]">
-                        <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-100">
-                            <tr id="tableHeader"></tr>
-                        </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-50 text-xs md:text-sm">
-                            <tr><td colspan="14" class="py-24 text-center opacity-30 font-medium italic">Giriş yapıldıktan sonra veriler yüklenecektir.</td></tr>
-                        </tbody>
-                    </table>
-                    <div id="loadMoreArea" class="p-4 text-center hidden">
-                        <button onclick="renderNextPage()" class="px-6 py-2 bg-indigo-50 text-indigo-600 font-bold rounded-full text-xs hover:bg-indigo-100 transition-all border border-indigo-100">
-                            Daha Fazla Yükle (Kalan: <span id="remainingCount">0</span>)
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="bg-slate-50 border-t border-slate-100 px-4 py-2 flex justify-between items-center text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">
-                    <div class="flex items-center gap-3">
-                        <span id="unsavedBadge" class="hidden text-amber-600"><i class="fas fa-exclamation-circle"></i> KAYDEDİLMEMİŞ</span>
-                    </div>
-                    <div id="activeFilterDisplay" class="text-indigo-600 font-bold uppercase tracking-wider">TÜM KAYITLAR</div>
-                    <div id="lastUpdateInfo">HAZIR</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- İKA TAKİP GÖRÜNÜMÜ -->
-        <div id="ikaView" class="hidden flex flex-col flex-grow">
-            
-            <!-- İKA İstatistikleri -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-slate-400">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Toplam İKA</p>
-                    <h3 id="ikaStatTotal" class="text-xl font-black text-slate-600 mt-1">0</h3>
-                </div>
-                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-indigo-500 cursor-pointer" onclick="toggleIkaTable('1')">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">1. Öncelik İKA</p>
-                    <h3 id="ikaStat1" class="text-xl font-black text-indigo-600 mt-1">0</h3>
-                </div>
-                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500 cursor-pointer" onclick="toggleIkaTable('2')">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">2. Öncelik İKA</p>
-                    <h3 id="ikaStat2" class="text-xl font-black text-amber-600 mt-1">0</h3>
-                </div>
-                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-red-500 cursor-pointer" onclick="toggleIkaTable('3')">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">3. Öncelik İKA</p>
-                    <h3 id="ikaStat3" class="text-xl font-black text-red-600 mt-1">0</h3>
-                </div>
-                <div class="stat-card bg-white p-3 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">İşlem Yapılan</p>
-                    <h3 id="ikaStatProcessed" class="text-xl font-black text-emerald-600 mt-1">0</h3>
-                </div>
-            </div>
-
-            <!-- İKA Kontrolleri -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6">
-                <div class="md:col-span-3">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">İlçe Filtresi (İKA)</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">İlçe Filtresi</label>
                     <select id="ikaDistrictSelect" onchange="filterIkaData()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs">
                         <option value="ALL">TÜM İLÇELER</option>
                         <option value="AKDENİZ">AKDENİZ</option>
@@ -390,20 +204,32 @@
                         <option value="YENİŞEHİR">YENİŞEHİR</option>
                     </select>
                 </div>
-                <div class="md:col-span-6">
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Mahalle Filtresi</label>
+                    <select id="mahalleSelect" onchange="filterIkaData()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs disabled:bg-slate-50 disabled:text-slate-400">
+                        <option value="ALL">TÜM MAHALLELER</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Tekniker Filtresi</label>
+                    <select id="teknikerSelect" onchange="filterIkaData()" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 text-xs disabled:bg-slate-50 disabled:text-slate-400">
+                        <option value="ALL">TÜM TEKNİKERLER</option>
+                    </select>
+                </div>
+                <div class="md:col-span-3">
                     <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1 tracking-tight">Hızlı Arama</label>
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                        <input type="text" id="ikaSearchInput" oninput="debounceIkaFilter()" placeholder="ID, Mahalle, Tescil Tipi, Dava Durumu veya Açıklama..." class="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
+                        <input type="text" id="ikaSearchInput" oninput="debounceIkaFilter()" placeholder="ID, Mahalle veya Açıklama..." class="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-xs">
                     </div>
                 </div>
                 <div class="md:col-span-3 flex flex-col justify-end gap-1">
                     <div class="flex gap-2 w-full">
-                        <button onclick="exportIkaToExcel('ALL')" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tüm İKA Tablolarını İndir">
+                        <button onclick="exportIkaToExcel('ALL')" class="w-1/4 bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-2 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Tüm İKA Tablolarını Toplu İndir">
                             <i class="fas fa-file-excel"></i>
                         </button>
                         <button id="ikaSaveBtn" onclick="saveIkaDataToGitHub()" disabled class="w-3/4 bg-slate-100 text-slate-300 font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 cursor-not-allowed shadow-sm text-xs">
-                            <i class="fas fa-save"></i> İKA Kaydet
+                            <i class="fas fa-save"></i> Değişiklikleri Kaydet
                         </button>
                     </div>
                     <div id="ikaBtnWarning" class="hidden blink-warning text-[9px] font-bold text-red-600 text-center uppercase tracking-tighter mt-1">
@@ -426,23 +252,22 @@
                                 <i class="fas fa-file-excel"></i> İndir
                             </span>
                             <span id="ikaRecordCount1" class="text-[10px] font-bold text-indigo-500">Yükleniyor...</span>
-                            <i id="ikaToggleIcon1" class="fas fa-chevron-down text-indigo-400 transition-transform rotate-180"></i>
+                            <i id="ikaToggleIcon1" class="fas fa-chevron-down text-indigo-400 transition-transform"></i>
                         </div>
                     </button>
-                    <div id="ikaTableWrapper1" class="table-container overflow-auto custom-scrollbar transition-all duration-300">
-                        <table class="w-full text-left border-collapse min-w-[1400px]">
+                    <div id="ikaTableWrapper1" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
+                        <table class="w-full text-left border-collapse min-w-[1200px]">
                             <thead class="bg-indigo-50/50 sticky top-0 z-10 border-b border-indigo-100">
                                 <tr>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlçe</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mahalle</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tescil Tipi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Arazi Ölçü Gerekli mi?</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Arazi Ölçüsü Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dava Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Kontrol Açıklama</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Tescile Gönderildi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlişkili Parsel</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">İlçe</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Mahalle</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Tescil Tipi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kontrol Açıklama</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50/30 w-40">Bakanlık Durumu</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Firmaya Teslim</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Tescile Gönderildi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">İlişkili Parsel</th>
                                 </tr>
                             </thead>
                             <tbody id="ikaTableBody1" class="divide-y divide-slate-50 text-xs md:text-sm"></tbody>
@@ -468,16 +293,17 @@
                         <table class="w-full text-left border-collapse min-w-[1400px]">
                             <thead class="bg-amber-50/50 sticky top-0 z-10 border-b border-amber-100">
                                 <tr>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlçe</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mahalle</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tescil Tipi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Arazi Ölçü Gerekli mi?</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Arazi Ölçüsü Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dava Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Kontrol Açıklama</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Tescile Gönderildi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlişkili Parsel</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">İlçe</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Mahalle</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Tescil Tipi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Arazi Ölçü Gerekli mi?</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-28 text-center">Arazi Ölçüsü Durumu</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32 text-center">Dava Durumu</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kontrol Açıklama</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Firmaya Teslim</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Tescile Gönderildi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">İlişkili Parsel</th>
                                 </tr>
                             </thead>
                             <tbody id="ikaTableBody2" class="divide-y divide-slate-50 text-xs md:text-sm"></tbody>
@@ -503,17 +329,18 @@
                         <table class="w-full text-left border-collapse min-w-[1500px]">
                             <thead class="bg-red-50/50 sticky top-0 z-10 border-b border-red-100">
                                 <tr>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ID</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlçe</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mahalle</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tescil Tipi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Arazi Ölçü Gerekli mi?</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Arazi Ölçüsü Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dava Durumu</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-1/4">Kontrol Açıklama</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider w-1/5 bg-indigo-50/30">Kurum Görüşü</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Tescile Gönderildi</th>
-                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">İlişkili Parsel</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-24">İlçe</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Mahalle</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">Tescil Tipi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Arazi Ölçü Gerekli mi?</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-28 text-center">Arazi Ölçüsü Durumu</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32 text-center">Dava Durumu</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kontrol Açıklama</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider w-40 bg-indigo-50/30">Kurum Görüşü</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Firmaya Teslim</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center w-28">Tescile Gönderildi</th>
+                                    <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-32">İlişkili Parsel</th>
                                 </tr>
                             </thead>
                             <tbody id="ikaTableBody3" class="divide-y divide-slate-50 text-xs md:text-sm"></tbody>
@@ -540,29 +367,9 @@
         const GITHUB_REPO = "gokhangeo/thatakip";
         const GITHUB_BRANCH = "main";
 
-        const DISTRICTS = ["AKDENİZ", "ANAMUR", "AYDINCIK", "BOZYAZI", "ÇAMLIYAYLA", "ERDEMLİ", "GÜLNAR", "MEZİTLİ", "MUT", "SİLİFKE", "TARSUS", "TOROSLAR", "YENİŞEHİR"];
-        const STAGES = ["Bekliyor", "Onaylandı(Firmaya İletildi)", "Dosya Hazırlandı", "Bakanlığa Gönderildi", "Bakanlıktan Geldi", "Kurum Görüşü Soruldu", "Kurum Görüşleri Tamamlandı", "Tescile Gönderildi"];
-
-        // State variables
-        let activeTab = 'THA';
         let repoFilesCache = []; 
         let personnelIdMap = {};
         let personnelMahalleMap = {};
-
-        // THA state
-        let currentData = []; 
-        let displayList = []; 
-        let districtFileShas = {};
-        let currentDistrict = "ALL";
-        let isModified = false;
-        let priorityFilter = "all";
-        let specificStatusFilter = "all";
-        let districtLimitFilter = "all";
-        let currentPage = 1;
-        const pageSize = 100;
-        let map, geoLayer;
-        let districtKMLs = new Map(); 
-        let districtGlobalBounds = null;
 
         // IKA state
         let ikaData = { '1': [], '2': [], '3': [] };
@@ -601,51 +408,58 @@
             location.reload();
         }
 
-        window.switchTab = function(tab) {
-            activeTab = tab;
-            if (tab === 'THA') {
-                document.getElementById('thaView').classList.remove('hidden');
-                document.getElementById('ikaView').classList.add('hidden');
-                
-                document.getElementById('tabThaBtn').classList.add('bg-indigo-600', 'text-white');
-                document.getElementById('tabThaBtn').classList.remove('bg-transparent', 'text-slate-600');
-                
-                document.getElementById('tabIkaBtn').classList.remove('bg-indigo-600', 'text-white');
-                document.getElementById('tabIkaBtn').classList.add('bg-transparent', 'text-slate-600');
-                
-                setTimeout(() => { if (map) map.invalidateSize(); }, 100);
-            } else {
-                document.getElementById('thaView').classList.add('hidden');
-                document.getElementById('ikaView').classList.remove('hidden');
-                
-                document.getElementById('tabIkaBtn').classList.add('bg-indigo-600', 'text-white');
-                document.getElementById('tabIkaBtn').classList.remove('bg-transparent', 'text-slate-600');
-                
-                document.getElementById('tabThaBtn').classList.remove('bg-indigo-600', 'text-white');
-                document.getElementById('tabThaBtn').classList.add('bg-transparent', 'text-slate-600');
-                
-                if (ikaData['1'].length === 0 && ikaData['2'].length === 0 && ikaData['3'].length === 0) {
-                    fetchIkaData();
-                }
-            }
-        }
-
         async function initializeApp() {
-            initMap();
-            toggleLoader(true, "Veriler Yükleniyor...");
+            toggleLoader(true, "Sistem ve Personel Verileri Yükleniyor...");
             await fetchRepoCache();
             await fetchPersonnelData();
             toggleLoader(false);
-            fetchDistrictData();
+            fetchIkaData(); 
+        }
+
+        function safeFileName(str) {
+            return str.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').toUpperCase();
+        }
+
+        function normalizeId(id) {
+            if (id === null || id === undefined) return "";
+            let s = String(id).trim();
+            if (s.toLowerCase().includes('e')) {
+                let num = Number(s);
+                if (!isNaN(num)) s = String(Math.floor(num));
+            }
+            if (s.includes('.')) {
+                s = s.split('.')[0];
+            }
+            return s.replace(/\D/g, '');
+        }
+
+        async function fetchRepoCache() {
+            if (repoFilesCache.length > 0) return true;
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
+                if (res.ok) {
+                    repoFilesCache = await res.json();
+                    return true;
+                } else {
+                    throw new Error(`GitHub Hatası: ${res.status}`);
+                }
+            } catch (e) { 
+                console.error("Repo cache hatası:", e); 
+                showToast(e.message || "GitHub'a bağlanılamadı.", "error", 6000);
+                return false;
+            }
+        }
+
+        function getFileInfo(name, ext) {
+            const d1 = name.toLowerCase() + ext;
+            const d2 = safeFileName(name).toLowerCase() + ext;
+            return repoFilesCache.find(f => f.name.toLowerCase() === d1 || f.name.toLowerCase() === d2);
         }
 
         async function fetchPersonnelData() {
             try {
                 const fileObj = getFileInfo('personel_listesi', '.xlsx');
-                if (!fileObj) {
-                    console.warn("personel_listesi.xlsx bulunamadı.");
-                    return;
-                }
+                if (!fileObj) return;
 
                 const response = await fetch(fileObj.download_url);
                 if (response.ok) {
@@ -682,21 +496,42 @@
             }
         }
 
+        const toggleLoader = (show, text = "İşlem Yapılıyor") => {
+            const l = document.getElementById('loader');
+            if (text) document.getElementById('loaderText').innerText = text;
+            l.classList.toggle('hidden', !show);
+        };
+
+        const showToast = (msg, type = "success", duration = 4000) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl shadow-2xl text-white text-[11px] font-bold transition-all z-[1100] ${type === 'success' ? 'bg-indigo-600' : 'bg-red-500'}`;
+            t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, duration);
+        };
+
         // ==========================================
         // İKA TAKİP MANTIĞI 
         // ==========================================
         
         window.toggleIkaTable = function(priority) {
-            const wrapper = document.getElementById('ikaTableWrapper' + priority);
-            const icon = document.getElementById('ikaToggleIcon' + priority);
-            
-            if(wrapper.classList.contains('hidden')) {
-                wrapper.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                wrapper.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            }
+            ['1', '2', '3'].forEach(p => {
+                const wrapper = document.getElementById('ikaTableWrapper' + p);
+                const icon = document.getElementById('ikaToggleIcon' + p);
+                
+                if (p === priority) {
+                    if(wrapper.classList.contains('hidden')) {
+                        wrapper.classList.remove('hidden');
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        wrapper.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                } else {
+                    wrapper.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
         }
 
         async function fetchIkaData() {
@@ -716,7 +551,21 @@
                         if (response.ok) {
                             const arrayBuffer = await response.arrayBuffer();
                             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                            ikaData[p] = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 1, defval: "" });
+                            let parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 1, defval: "" });
+                            
+                            // Personel verilerini enjekte et
+                            ikaData[p] = parsedData.map(row => {
+                                const pId = normalizeId(row["ID"]);
+                                const pKey = `${String(row["İlçe"] || "").toUpperCase().trim()}_${String(row["Mahalle"] || "").toUpperCase().trim()}`;
+                                
+                                let pInfo = { t: "-", m: "-" };
+                                if (p !== '1') { 
+                                     pInfo = personnelIdMap[pId] || personnelMahalleMap[pKey] || { t: "Bilinmiyor", m: "Bilinmiyor" };
+                                }
+                                row["Tekniker"] = pInfo.t;
+                                row["Sorumlu Mühendis"] = pInfo.m;
+                                return row;
+                            });
                         }
                     } else {
                         console.warn(`${fileName} bulunamadı.`);
@@ -726,6 +575,7 @@
 
                 await Promise.all(fetchPromises);
                 
+                populateIkaDropdowns();
                 updateIkaSaveButton();
                 filterIkaData();
                 updateIkaStats();
@@ -737,13 +587,44 @@
             }
         }
 
+        function populateIkaDropdowns() {
+            const allData = [...ikaData['1'], ...ikaData['2'], ...ikaData['3']];
+            
+            // Mahalle
+            const mSelect = document.getElementById('mahalleSelect');
+            mSelect.innerHTML = '<option value="ALL">TÜM MAHALLELER</option>';
+            mSelect.disabled = false;
+            
+            const uniqueMahalleler = [...new Set(allData.map(item => item["Mahalle"] || "BİLİNMEYEN"))].sort((a,b) => a.localeCompare(b));
+            uniqueMahalleler.forEach(m => {
+                mSelect.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+
+            // Tekniker
+            const tSelect = document.getElementById('teknikerSelect');
+            tSelect.innerHTML = '<option value="ALL">TÜM TEKNİKERLER</option>';
+            tSelect.disabled = false;
+            
+            const uniqueTeknikerler = [...new Set(allData.map(item => item["Tekniker"] || "Bilinmiyor"))]
+                .filter(t => t !== "Bilinmiyor" && t !== "-")
+                .sort((a,b) => a.localeCompare(b));
+            
+            uniqueTeknikerler.forEach(t => {
+                tSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
         window.filterIkaData = function() {
             const distFilter = document.getElementById('ikaDistrictSelect').value;
+            const mFilter = document.getElementById('mahalleSelect').value;
+            const tFilter = document.getElementById('teknikerSelect').value;
             const query = document.getElementById('ikaSearchInput').value.toLowerCase();
             
             ['1', '2', '3'].forEach(p => {
                 ikaDisplayList[p] = ikaData[p].filter(row => {
                     if (distFilter !== "ALL" && String(row["İlçe"] || "").toUpperCase() !== distFilter) return false;
+                    if (mFilter !== "ALL" && String(row["Mahalle"] || "").toUpperCase() !== mFilter) return false;
+                    if (tFilter !== "ALL" && String(row["Tekniker"] || "") !== tFilter) return false;
                     
                     if (query) {
                         const mMatch = String(row["Mahalle"] || "").toLowerCase().includes(query);
@@ -772,11 +653,14 @@
             ['1', '2', '3'].forEach(p => {
                 const tbody = document.getElementById(`ikaTableBody${p}`);
                 const list = ikaDisplayList[p];
-                const hasKurumGorus = (p === '3');
-                const colSpan = hasKurumGorus ? 11 : 10;
+                
+                const hasArazi = (p === '2' || p === '3');
+                const hasDava = (p === '2' || p === '3');
+                const hasBakanlik = (p === '1');
+                const hasKurum = (p === '3');
                 
                 if(list.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="${colSpan}" class="py-6 text-center opacity-40 font-bold italic">Kayıt bulunamadı.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="15" class="py-6 text-center opacity-40 font-bold italic">Kayıt bulunamadı.</td></tr>`;
                     document.getElementById(`ikaRecordCount${p}`).innerText = "0 Kayıt";
                     return; 
                 }
@@ -790,45 +674,103 @@
                     const ilce = row["İlçe"] || "";
                     const mahalle = row["Mahalle"] || "";
                     const tescilTipi = row["Tescil Tipi"] || "";
+                    
                     const araziOlcuGerekliMi = String(row["Arazi Ölçü Gerekiyor mu"] || "").trim();
-                    const araziOlcuDurumu = row["Arazi Ölçüsü Durumu"] || "";
-                    const davaDurumu = row["Dava Durumu"] || "";
+                    const araziOlcuDurumu = String(row["Arazi Ölçüsü Durumu"] || "").trim();
+                    
+                    const davaDurumu = String(row["Dava Durumu"] || "").trim();
                     
                     const aciklamaKey = Object.keys(row).find(k => k.includes("Kontrol Açıklama")) || "Kontrol Açıklama (İptal ise nedeni/Firmaya Teslim Edildi)";
                     const aciklama = row[aciklamaKey] || "";
                     
-                    const kurumGorusu = row["Kurum Görüşü"] || "";
+                    const bakanlikDurumu = String(row["Bakanlık Durumu"] || "").trim();
+                    const bakanlikAciklama = String(row["Bakanlık Açıklaması"] || "").trim();
+
+                    const kurumGorusu = String(row["Kurum Görüşü"] || "").trim();
+                    const kurumAciklama = row["Kurum Görüşü Açıklama"] || "";
+                    
+                    const firmayaTeslim = String(row["Firmaya Teslim Edildi"] || "").trim();
                     const tescileGonderildi = String(row["Tescile Gönderildi"] || "").trim();
                     const iliskiliParsel = row["İlişkili Parsel"] || "";
 
-                    return `
+                    let rowHtml = `
                     <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td class="p-2 md:p-3 col-id text-[10px] md:text-xs">${id}</td>
                         <td class="p-2 md:p-3 font-black text-indigo-700 bg-indigo-50/10 text-[10px]">${ilce}</td>
                         <td class="p-2 md:p-3 font-semibold text-slate-700 text-[10px] md:text-xs">${mahalle}</td>
-                        <td class="p-2 md:p-3 font-semibold text-slate-600 text-[10px] md:text-xs">${tescilTipi}</td>
+                        <td class="p-2 md:p-3 font-semibold text-slate-600 text-[10px] md:text-xs">${tescilTipi}</td>`;
+                        
+                    if (hasArazi) {
+                        rowHtml += `
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçü Gerekiyor mu', this.value)" class="ika-input bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçü Gerekiyor mu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${araziOlcuGerekliMi===''?'selected':''}>-</option>
                                 <option value="Evet" ${araziOlcuGerekliMi==='Evet'?'selected':''}>Evet</option>
                                 <option value="Hayır" ${araziOlcuGerekliMi==='Hayır'?'selected':''}>Hayır</option>
                             </select>
                         </td>
-                        <td class="p-2 md:p-3">
-                            <input type="text" value="${araziOlcuDurumu}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçüsü Durumu', this.value)" placeholder="Örn: Tamamlandı..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
-                        </td>
-                        <td class="p-2 md:p-3">
-                            <input type="text" value="${davaDurumu}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Dava Durumu', this.value)" placeholder="Dava durumu..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
-                        </td>
+                        <td class="p-2 md:p-3 text-center">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçüsü Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                                <option value="" ${araziOlcuDurumu===''?'selected':''}>-</option>
+                                <option value="YAPILDI" ${araziOlcuDurumu==='YAPILDI'?'selected':''}>YAPILDI</option>
+                                <option value="YAPILMADI" ${araziOlcuDurumu==='YAPILMADI'?'selected':''}>YAPILMADI</option>
+                            </select>
+                        </td>`;
+                    }
+                    
+                    if (hasDava) {
+                        rowHtml += `
+                        <td class="p-2 md:p-3 text-center">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Dava Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                                <option value="" ${davaDurumu===''?'selected':''}>-</option>
+                                <option value="Muhakemat Geldi" ${davaDurumu==='Muhakemat Geldi'?'selected':''}>Muhakemat Geldi</option>
+                                <option value="Tutanak Tutuldu" ${davaDurumu==='Tutanak Tutuldu'?'selected':''}>Tutanak Tutuldu</option>
+                                <option value="Bekliyor" ${davaDurumu==='Bekliyor'?'selected':''}>Bekliyor</option>
+                            </select>
+                        </td>`;
+                    }
+
+                    rowHtml += `
                         <td class="p-2 md:p-3">
                             <input type="text" value="${aciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, '${aciklamaKey}', this.value)" placeholder="Açıklama giriniz..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
-                        </td>
-                        ${hasKurumGorus ? `
+                        </td>`;
+                        
+                    if (hasBakanlik) {
+                        rowHtml += `
                         <td class="p-2 md:p-3">
-                            <input type="text" value="${kurumGorusu}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü', this.value)" placeholder="Görüş..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600 border-indigo-200 focus:border-indigo-500">
-                        </td>` : ''}
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-indigo-600 cursor-pointer">
+                                <option value="" ${bakanlikDurumu===''?'selected':''}>-</option>
+                                <option value="Gönderildi" ${bakanlikDurumu==='Gönderildi'?'selected':''}>Gönderildi</option>
+                                <option value="Geldi" ${bakanlikDurumu==='Geldi'?'selected':''}>Geldi</option>
+                                <option value="İptal" ${bakanlikDurumu==='İptal'?'selected':''}>İptal</option>
+                            </select>
+                            <input id="bakanlikAciklama_${p}_${globalIndex}" type="text" value="${bakanlikAciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Açıklaması', this.value)" placeholder="İptal sebebi..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${bakanlikDurumu === 'İptal' ? '' : 'hidden'}">
+                        </td>`;
+                    }
+
+                    if (hasKurum) {
+                        rowHtml += `
+                        <td class="p-2 md:p-3">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                                <option value="" ${kurumGorusu===''?'selected':''}>-</option>
+                                <option value="Soruldu" ${kurumGorusu==='Soruldu'?'selected':''}>Soruldu</option>
+                                <option value="Tamamlandı" ${kurumGorusu==='Tamamlandı'?'selected':''}>Tamamlandı</option>
+                                <option value="Eksik" ${kurumGorusu==='Eksik'?'selected':''}>Eksik</option>
+                            </select>
+                            <input id="kurumAciklama_${p}_${globalIndex}" type="text" value="${kurumAciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü Açıklama', this.value)" placeholder="Eksik detayı..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${kurumGorusu === 'Eksik' ? '' : 'hidden'}">
+                        </td>`;
+                    }
+
+                    rowHtml += `
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Tescile Gönderildi', this.value)" class="ika-input bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Firmaya Teslim Edildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                                <option value="" ${firmayaTeslim===''?'selected':''}>-</option>
+                                <option value="Evet" ${firmayaTeslim==='Evet'?'selected':''}>Evet</option>
+                                <option value="Hayır" ${firmayaTeslim==='Hayır'?'selected':''}>Hayır</option>
+                            </select>
+                        </td>
+                        <td class="p-2 md:p-3 text-center">
+                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Tescile Gönderildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${tescileGonderildi===''?'selected':''}>-</option>
                                 <option value="Evet" ${tescileGonderildi==='Evet'?'selected':''}>Evet</option>
                                 <option value="Hayır" ${tescileGonderildi==='Hayır'?'selected':''}>Hayır</option>
@@ -839,6 +781,8 @@
                         </td>
                     </tr>
                     `;
+
+                    return rowHtml;
                 }).join('');
 
                 tbody.innerHTML = rowsHtml;
@@ -849,6 +793,29 @@
             ikaData[p][index][field] = value;
             ikaData[p][index]["_UpdateDateLocal"] = new Date().toISOString().split('T')[0]; 
             isIkaModified[p] = true;
+            
+            if (field === 'Kurum Görüşü') {
+                const inputEl = document.getElementById(`kurumAciklama_${p}_${index}`);
+                if(inputEl) {
+                    if (value === 'Eksik') {
+                        inputEl.classList.remove('hidden');
+                    } else {
+                        inputEl.classList.add('hidden');
+                    }
+                }
+            }
+
+            if (field === 'Bakanlık Durumu') {
+                const inputEl = document.getElementById(`bakanlikAciklama_${p}_${index}`);
+                if(inputEl) {
+                    if (value === 'İptal') {
+                        inputEl.classList.remove('hidden');
+                    } else {
+                        inputEl.classList.add('hidden');
+                    }
+                }
+            }
+            
             updateIkaSaveButton();
             updateIkaStats();
         }
@@ -864,23 +831,19 @@
             document.getElementById('ikaStat3').innerText = total3;
             
             let islemYapilanSayisi = 0;
-            const todayStr = new Date().toISOString().split('T')[0];
 
             ['1', '2', '3'].forEach(p => {
                 ikaData[p].forEach(row => {
-                    const aciklamaKey = Object.keys(row).find(k => k.includes("Kontrol Açıklama"));
-                    const aciklama = String(aciklamaKey ? row[aciklamaKey] : "").trim();
-                    const olcuDurumu = String(row["Arazi Ölçüsü Durumu"] || "").trim();
-                    const davaDurumu = String(row["Dava Durumu"] || "").trim();
-                    const tescil = String(row["Tescile Gönderildi"] || "").trim();
-                    
-                    if(aciklama !== "" || olcuDurumu !== "" || davaDurumu !== "" || tescil !== "") {
+                    const teslim = String(row["Firmaya Teslim Edildi"] || "").trim();
+                    if(teslim === "Evet") {
                         islemYapilanSayisi++;
                     }
                 });
             });
 
             document.getElementById('ikaStatProcessed').innerText = islemYapilanSayisi;
+            updateSummaryPanel();
+            updatePersonnelPanel();
         }
 
         function updateIkaSaveButton() {
@@ -913,12 +876,14 @@
                         const cleanIkaData = ikaData[p].map(row => {
                             const newRow = {...row};
                             delete newRow["_UpdateDateLocal"]; 
+                            delete newRow["Tekniker"]; 
+                            delete newRow["Sorumlu Mühendis"]; 
                             return newRow;
                         });
 
+                        const headerTitle = `${p}. ÖNCELİK(PLANLI)`;
                         const colCount = cleanIkaData.length > 0 ? Object.keys(cleanIkaData[0]).length : 10;
                         const emptyCols = new Array(colCount - 1).fill("");
-                        const headerTitle = `${p}. ÖNCELİK(PLANLI)`;
                         
                         const ws = XLSX.utils.aoa_to_sheet([[headerTitle, ...emptyCols]]);
                         XLSX.utils.sheet_add_json(ws, cleanIkaData, { origin: "A2" });
@@ -963,12 +928,15 @@
             const workbook = XLSX.utils.book_new();
             const priorities = type === 'ALL' ? ['1', '2', '3'] : [type];
             
+            let hasData = false;
             priorities.forEach(p => {
                 if (!ikaData[p] || ikaData[p].length === 0) return;
-                
+                hasData = true;
                 const cleanData = ikaData[p].map(row => {
                     const newRow = {...row};
                     delete newRow["_UpdateDateLocal"];
+                    delete newRow["Tekniker"];
+                    delete newRow["Sorumlu Mühendis"];
                     return newRow;
                 });
                 
@@ -977,13 +945,13 @@
                 XLSX.utils.book_append_sheet(workbook, ws, sheetName);
             });
 
-            if (workbook.SheetNames.length === 0) {
+            if (!hasData) {
                 showToast("İndirilecek veri bulunamadı!", "error");
                 return;
             }
 
             const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-            const fileName = type === 'ALL' ? `IKA_Toplu_Rapor_${dateStr}.xlsx` : `IKA_${type}_Oncelik_${dateStr}.xlsx`;
+            const fileName = type === 'ALL' ? `IKA_Tum_Listeler_${dateStr}.xlsx` : `IKA_${type}_Oncelik_${dateStr}.xlsx`;
             
             try {
                 XLSX.writeFile(workbook, fileName);
@@ -992,10 +960,6 @@
                 showToast("İndirme hatası", "error");
             }
         }
-
-        // ==========================================
-        // THA MANTIĞI 
-        // ==========================================
 
         window.toggleSummaryPanel = function() {
             const panel = document.getElementById('summaryPanel');
@@ -1022,37 +986,39 @@
         }
 
         window.exportSummaryToExcel = function() {
-            if(currentData.length === 0) {
+            const allData = [...ikaData['1'], ...ikaData['2'], ...ikaData['3']];
+            if(allData.length === 0) {
                 showToast("Dışa aktarılacak özet veri yok!", "error");
                 return;
             }
 
             const districtGroups = {};
 
-            currentData.forEach(row => {
-                const dist = row["_SOURCE_DISTRICT"];
-                const mahalle = row["Mahallesi"] || "BİLİNMEYEN";
-                
-                if(!districtGroups[dist]) {
-                    districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0, mahalleler: {} };
-                }
-                if(!districtGroups[dist].mahalleler[mahalle]) {
-                    districtGroups[dist].mahalleler[mahalle] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
-                }
-                
-                districtGroups[dist].total++;
-                districtGroups[dist].mahalleler[mahalle].total++;
-                
-                const p = String(row["Tescil Önceliği"] || "");
-                if(p.includes("1.")) { districtGroups[dist].p1++; districtGroups[dist].mahalleler[mahalle].p1++; }
-                else if(p.includes("2.")) { districtGroups[dist].p2++; districtGroups[dist].mahalleler[mahalle].p2++; }
-                else if(p.includes("3.")) { districtGroups[dist].p3++; districtGroups[dist].mahalleler[mahalle].p3++; }
+            ['1','2','3'].forEach(p => {
+                ikaData[p].forEach(row => {
+                    const dist = row["İlçe"] || "BİLİNMEYEN";
+                    const mahalle = row["Mahalle"] || "BİLİNMEYEN";
+                    
+                    if(!districtGroups[dist]) {
+                        districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0, mahalleler: {} };
+                    }
+                    if(!districtGroups[dist].mahalleler[mahalle]) {
+                        districtGroups[dist].mahalleler[mahalle] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
+                    }
+                    
+                    districtGroups[dist].total++;
+                    districtGroups[dist].mahalleler[mahalle].total++;
+                    
+                    if(p === '1') { districtGroups[dist].p1++; districtGroups[dist].mahalleler[mahalle].p1++; }
+                    else if(p === '2') { districtGroups[dist].p2++; districtGroups[dist].mahalleler[mahalle].p2++; }
+                    else if(p === '3') { districtGroups[dist].p3++; districtGroups[dist].mahalleler[mahalle].p3++; }
 
-                const st = String(row["Onay Durumu"] || "").trim();
-                if(st !== "" && st !== "Bekliyor") {
-                    districtGroups[dist].processed++;
-                    districtGroups[dist].mahalleler[mahalle].processed++;
-                }
+                    const teslim = String(row["Firmaya Teslim Edildi"] || "").trim();
+                    if(teslim === "Evet") {
+                        districtGroups[dist].processed++;
+                        districtGroups[dist].mahalleler[mahalle].processed++;
+                    }
+                });
             });
 
             const workbook = XLSX.utils.book_new();
@@ -1105,764 +1071,162 @@
 
             try {
                 const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-                XLSX.writeFile(workbook, `THA_Detayli_Ozet_Raporu_${dateStr}.xlsx`);
+                XLSX.writeFile(workbook, `IKA_Detayli_Ozet_Raporu_${dateStr}.xlsx`);
                 showToast("Detaylı özet tablo başarıyla indirildi.");
             } catch (error) {
                 showToast("İndirme sırasında bir hata oluştu.", "error");
             }
         }
 
-        window.exportToExcel = function() {
-            if(displayList.length === 0) {
-                showToast("İndirilecek veri bulunamadı!", "error");
-                return;
-            }
+        window.handleDistrictRowClick = function(dist) {
+            const selectEl = document.getElementById('ikaDistrictSelect');
+            if(selectEl.value === dist) selectEl.value = 'ALL';
+            else selectEl.value = dist;
+            filterIkaData();
             
-            toggleLoader(true, "Excel Dosyası Hazırlanıyor...");
-            setTimeout(() => {
-                try {
-                    const exportData = displayList.map(({ _SOURCE_DISTRICT, ...rest }) => {
-                        let obj = {};
-                        if(currentDistrict === "ALL") obj["İlçe"] = _SOURCE_DISTRICT;
-                        obj = { ...obj, ...rest };
-                        return obj;
-                    });
-
-                    const worksheet = XLSX.utils.json_to_sheet(exportData);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "THA_Rapor");
-                    
-                    const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-                    XLSX.writeFile(workbook, `THA_Rapor_${currentDistrict}_${dateStr}.xlsx`);
-                    showToast("Excel dosyası başarıyla indirildi.");
-                } catch (error) {
-                    showToast("İndirme sırasında bir hata oluştu.", "error");
-                } finally {
-                    toggleLoader(false);
-                }
-            }, 500);
-        }
-
-        function normalizeId(id) {
-            if (id === null || id === undefined) return "";
-            let s = String(id).trim();
-            if (s.toLowerCase().includes('e')) {
-                let num = Number(s);
-                if (!isNaN(num)) s = String(Math.floor(num));
-            }
-            if (s.includes('.')) {
-                s = s.split('.')[0];
-            }
-            return s.replace(/\D/g, '');
-        }
-
-        function getPriorityColor(pStr) {
-            if (!pStr) return "#94a3b8"; 
-            if (pStr.includes("1.")) return "#4f46e5"; 
-            if (pStr.includes("2.")) return "#d97706"; 
-            if (pStr.includes("3.")) return "#dc2626"; 
-            return "#94a3b8";
-        }
-
-        function initMap() {
-            map = L.map('map', {
-                center: [36.8, 34.6],
-                zoom: 10,
-                maxZoom: 20
-            });
-            L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                attribution: '&copy; Google Maps'
-            }).addTo(map);
-            geoLayer = L.featureGroup().addTo(map);
-        }
-
-        window.toggleMapManual = function() {
-            const mapEl = document.getElementById('map');
-            const textEl = document.getElementById('mapToggleText');
-            const isVisible = mapEl.classList.toggle('map-visible');
-            textEl.innerText = isVisible ? "KAPAT" : "AÇ";
-            if(isVisible) {
-                setTimeout(() => { 
-                    map.invalidateSize(); 
-                    if(geoLayer.getLayers().length > 0) {
-                        map.fitBounds(geoLayer.getBounds(), { padding: [50, 50] });
-                    } else if(districtGlobalBounds && districtGlobalBounds.isValid()) {
-                        map.fitBounds(districtGlobalBounds, { padding: [40, 40] });
-                    }
-                }, 450);
-            }
-        }
-
-        function openMap() {
-            const mapEl = document.getElementById('map');
-            if(!mapEl.classList.contains('map-visible')) {
-                mapEl.classList.add('map-visible');
-                document.getElementById('mapToggleText').innerText = "KAPAT";
-                setTimeout(() => { map.invalidateSize(); }, 450);
-            }
-        }
-
-        const toggleLoader = (show, text = "Veritabanı Güncelleniyor") => {
-            const l = document.getElementById('loader');
-            if (text) document.getElementById('loaderText').innerText = text;
-            l.classList.toggle('hidden', !show);
-        };
-
-        const showToast = (msg, type = "success", duration = 4000) => {
-            const t = document.getElementById('toast');
-            t.innerText = msg;
-            t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl shadow-2xl text-white text-[11px] font-bold transition-all z-[1100] ${type === 'success' ? 'bg-indigo-600' : 'bg-red-500'}`;
-            t.style.opacity = '1'; t.style.transform = 'translateY(0)';
-            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, duration);
-        };
-
-        const updateConnection = (status) => {
-            const div = document.getElementById('connectionStatus');
-            if(status === 'ok') {
-                div.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> BAĞLI';
-                div.className = "text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-2 border border-emerald-100";
+            const subRow = document.getElementById('subrow-' + dist);
+            const icon = document.getElementById('icon-' + dist);
+            
+            if(subRow.classList.contains('hidden')) {
+                subRow.classList.remove('hidden');
+                icon.style.transform = 'rotate(90deg)';
             } else {
-                div.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div> BAĞLANTI YOK';
-                div.className = "text-[10px] font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-400 flex items-center gap-2";
-            }
-        };
-
-        window.toggleTotalMenu = function() {
-            document.getElementById('totalMenu').classList.toggle('show');
-            document.getElementById('processedMenu').classList.remove('show');
-        }
-
-        window.toggleProcessedMenu = function() {
-            document.getElementById('processedMenu').classList.toggle('show');
-            document.getElementById('totalMenu').classList.remove('show');
-        }
-
-        function safeFileName(str) {
-            return str.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').toUpperCase();
-        }
-
-        async function fetchRepoCache() {
-            if (repoFilesCache.length > 0) return true;
-            try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
-                if (res.ok) {
-                    repoFilesCache = await res.json();
-                    return true;
-                } else {
-                    const errData = await res.json();
-                    throw new Error(`GitHub Hatası: ${res.status} - ${errData.message || 'Erişim engellendi'}`);
-                }
-            } catch (e) { 
-                console.error("Repo cache hatası:", e); 
-                showToast(e.message || "GitHub'a bağlanılamadı. Token süresi dolmuş olabilir.", "error", 6000);
-                return false;
+                subRow.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
             }
         }
 
-        function getFileInfo(district, ext) {
-            const d1 = district.toLowerCase() + ext;
-            const d2 = safeFileName(district).toLowerCase() + ext;
-            return repoFilesCache.find(f => f.name.toLowerCase() === d1 || f.name.toLowerCase() === d2);
-        }
+        function updateSummaryPanel() {
+            const summaryBody = document.getElementById('summaryTableBody');
+            const districtGroups = {};
 
-        async function fetchKML(district) {
-            if (!repoFilesCache.length) await fetchRepoCache();
-            const fileObj = getFileInfo(district, '.kml');
-            if (!fileObj) return null;
-            
-            try {
-                const response = await fetch(fileObj.download_url);
-                if(!response.ok) return null;
-                const kmlContent = await response.text();
-                
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(kmlContent, "text/xml");
-                const placemarks = xmlDoc.getElementsByTagName("Placemark");
-                
-                let districtBounds = L.latLngBounds();
-                let count = 0;
+            ['1','2','3'].forEach(p => {
+                ikaData[p].forEach(row => {
+                    const dist = row["İlçe"] || "BİLİNMEYEN";
+                    const mahalle = row["Mahalle"] || "BİLİNMEYEN";
 
-                for(let p of placemarks) {
-                    let thaId = "";
-                    
-                    const dataNodes = p.getElementsByTagName("Data");
-                    for(let d of dataNodes) {
-                        const attrName = d.getAttribute("name");
-                        if(attrName === "THA ID" || attrName === "ID" || attrName === "tha_id") {
-                            thaId = normalizeId(d.getElementsByTagName("value")[0]?.textContent);
-                        }
+                    if(!districtGroups[dist]) {
+                        districtGroups[dist] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0, mahalleler: {} };
+                    }
+                    if(!districtGroups[dist].mahalleler[mahalle]) {
+                        districtGroups[dist].mahalleler[mahalle] = { total: 0, p1: 0, p2: 0, p3: 0, processed: 0 };
                     }
                     
-                    if(!thaId) {
-                        const simpleNodes = p.getElementsByTagName("SimpleData");
-                        for(let d of simpleNodes) {
-                            const attrName = d.getAttribute("name");
-                            if(attrName === "THA ID" || attrName === "ID" || attrName === "tha_id") {
-                                thaId = normalizeId(d.textContent);
-                            }
-                        }
+                    districtGroups[dist].total++;
+                    districtGroups[dist].mahalleler[mahalle].total++;
+
+                    if(p === '1') { districtGroups[dist].p1++; districtGroups[dist].mahalleler[mahalle].p1++; }
+                    else if(p === '2') { districtGroups[dist].p2++; districtGroups[dist].mahalleler[mahalle].p2++; }
+                    else if(p === '3') { districtGroups[dist].p3++; districtGroups[dist].mahalleler[mahalle].p3++; }
+
+                    const teslim = String(row["Firmaya Teslim Edildi"] || "").trim();
+                    if(teslim === "Evet") {
+                        districtGroups[dist].processed++;
+                        districtGroups[dist].mahalleler[mahalle].processed++;
                     }
-                    
-                    if(!thaId) {
-                        thaId = normalizeId(p.getElementsByTagName("name")[0]?.textContent);
-                    }
-                    
-                    if(!thaId) {
-                        const desc = p.getElementsByTagName("description")[0]?.textContent || "";
-                        const match = desc.match(/THA ID[:\s]+(\d+)/i);
-                        if(match) thaId = normalizeId(match[1]);
-                    }
-
-                    const coordsNode = p.getElementsByTagName("coordinates")[0];
-                    if(thaId && coordsNode) {
-                        const rawCoords = coordsNode.textContent.trim().split(/\s+/);
-                        const latLngs = rawCoords.map(c => {
-                            const parts = c.split(',');
-                            const lat = parseFloat(parts[1]);
-                            const lng = parseFloat(parts[0]);
-                            if (!isNaN(lat) && !isNaN(lng)) {
-                                const ll = L.latLng(lat, lng);
-                                districtBounds.extend(ll);
-                                return [lat, lng];
-                            }
-                            return null;
-                        }).filter(c => c !== null);
-
-                        if (latLngs.length > 0) {
-                            districtKMLs.set(thaId, latLngs);
-                            count++;
-                        }
-                    }
-                }
-                return count > 0 ? districtBounds : null;
-            } catch(e) { 
-                console.error(`${district} KML Hatası:`, e); 
-                return null;
-            }
-        }
-
-        function populateMahalleDropdown() {
-            const mSelect = document.getElementById('mahalleSelect');
-            mSelect.innerHTML = '<option value="ALL">TÜM MAHALLELER</option>';
-            
-            if (currentDistrict === "ALL") {
-                mSelect.disabled = true;
-                return;
-            }
-            
-            mSelect.disabled = false;
-            
-            const uniqueMahalleler = [...new Set(currentData.map(item => item["Mahallesi"] || "BİLİNMEYEN"))].sort((a,b) => a.localeCompare(b));
-            
-            uniqueMahalleler.forEach(m => {
-                mSelect.innerHTML += `<option value="${m}">${m}</option>`;
-            });
-        }
-
-        function populateTeknikerDropdown() {
-            const tSelect = document.getElementById('teknikerSelect');
-            tSelect.innerHTML = '<option value="ALL">TÜM TEKNİKERLER</option>';
-            
-            tSelect.disabled = false;
-            
-            const uniqueTeknikerler = [...new Set(currentData.map(item => item["Tekniker"] || "Bilinmiyor"))]
-                .filter(t => t !== "Bilinmiyor" && t !== "-")
-                .sort((a,b) => a.localeCompare(b));
-            
-            uniqueTeknikerler.forEach(t => {
-                tSelect.innerHTML += `<option value="${t}">${t}</option>`;
-            });
-        }
-
-        window.fetchDistrictData = async function() {
-            const district = document.getElementById('districtSelect').value;
-            currentDistrict = district;
-            priorityFilter = "all";
-            specificStatusFilter = "all";
-            districtLimitFilter = "all";
-            document.getElementById('dateFilter').value = ""; 
-            
-            const mSelect = document.getElementById('mahalleSelect');
-            mSelect.value = "ALL"; 
-
-            const tSelect = document.getElementById('teknikerSelect');
-            tSelect.value = "ALL"; 
-            
-            districtKMLs.clear(); 
-            geoLayer.clearLayers();
-            districtGlobalBounds = null;
-            
-            toggleLoader(true, district === "ALL" ? "Tüm İlçeler Harmanlanıyor..." : `${district} Verileri Getiriliyor...`);
-            
-            try {
-                const cacheOk = await fetchRepoCache();
-                if(!cacheOk) throw new Error("GitHub Dosya listesi alınamadı. Token şifrenizi kontrol edin.");
-
-                const loadDistricts = district === "ALL" ? DISTRICTS : [district];
-                let totalBounds = L.latLngBounds();
-                let boundsFound = false;
-
-                const fetchPromises = loadDistricts.map(async d => {
-                    try {
-                        const fileObj = getFileInfo(d, '.xlsx');
-                        
-                        if(fileObj) {
-                            districtFileShas[d] = fileObj.sha;
-                            const response = await fetch(fileObj.download_url);
-                            
-                            if(response.ok) {
-                                const arrayBuffer = await response.arrayBuffer();
-                                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                                const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-                                
-                                data.forEach(item => {
-                                    if(item["Onay Durumu"] === "Onaylandı") {
-                                        item["Onay Durumu"] = "Onaylandı(Firmaya İletildi)";
-                                    }
-                                });
-
-                                const b = await fetchKML(d);
-                                if(b && b.isValid()) {
-                                    totalBounds.extend(b);
-                                    boundsFound = true;
-                                }
-
-                                return data.map(item => {
-                                    const pId = normalizeId(item["THA ID"]);
-                                    const pKey = `${d}_${(item["Mahallesi"] || "").toUpperCase().trim()}`;
-                                    const oncelik = String(item["Tescil Önceliği"] || "");
-                                    const nitelik = String(item["Nitelik"] || "").toUpperCase().replace(/\s+/g, '');
-                                    
-                                    let pInfo = { t: "-", m: "-" };
-
-                                    if (!oncelik.includes("1.") && !nitelik.includes("2B")) {
-                                        pInfo = personnelIdMap[pId];
-                                        if (!pInfo) {
-                                            pInfo = personnelMahalleMap[pKey] || { t: "Bilinmiyor", m: "Bilinmiyor" };
-                                        }
-                                    }
-                                    
-                                    return { 
-                                        ...item, 
-                                        "_SOURCE_DISTRICT": d,
-                                        "Tekniker": pInfo.t,
-                                        "Sorumlu Mühendis": pInfo.m
-                                    };
-                                });
-                            } else {
-                                throw new Error(`${d}.xlsx dosyası indirilemedi (Hata: ${response.status})`);
-                            }
-                        } else {
-                            console.warn(`${d}.xlsx GitHub deposunda bulunamadı!`);
-                        }
-                    } catch (err) {
-                        console.error(`${d} için veri çekilirken hata:`, err);
-                    }
-                    return [];
                 });
-
-                const results = await Promise.all(fetchPromises);
-                currentData = results.flat();
-                
-                if(currentData.length === 0) {
-                    showToast("Seçilen ilçeye ait Excel verisi bulunamadı.", "error");
-                }
-
-                isModified = false;
-                populateMahalleDropdown(); 
-                populateTeknikerDropdown();
-                updateStats(currentData);
-                updateSaveButton();
-                renderTableHeader();
-                filterLocalData(); 
-                updateConnection('ok');
-                
-                if(boundsFound && totalBounds.isValid()) {
-                    districtGlobalBounds = totalBounds;
-                    if(document.getElementById('map').classList.contains('map-visible')) {
-                        map.fitBounds(totalBounds, { padding: [40, 40] });
-                        map.invalidateSize();
-                    }
-                }
-
-            } catch (error) {
-                console.error(error);
-                showToast(error.message || "İşlem sırasında beklenmeyen bir hata oluştu.", "error");
-            } finally {
-                toggleLoader(false);
-            }
-        }
-
-        window.showFilteredOnMap = function() {
-            geoLayer.clearLayers();
-            let bounds = L.latLngBounds();
-            let hasBounds = false;
-
-            displayList.forEach(parsel => {
-                const cleanId = normalizeId(parsel["THA ID"]);
-                const coords = districtKMLs.get(cleanId);
-                
-                if(coords) {
-                    const priority = parsel["Tescil Önceliği"] || "";
-                    const color = getPriorityColor(priority);
-                    const status = parsel["Onay Durumu"] || "Bekliyor";
-                    const mahalle = parsel["Mahallesi"] || "-";
-                    
-                    const poly = L.polygon(coords, { 
-                        color: color, 
-                        fillColor: color, 
-                        fillOpacity: 0.45,
-                        weight: 4 
-                    }).addTo(geoLayer);
-
-                    const popupContent = `
-                        <div class="popup-title">Parsel Bilgisi</div>
-                        <div class="popup-row"><span class="popup-label">ID:</span> <span class="popup-val">${cleanId}</span></div>
-                        <div class="popup-row"><span class="popup-label">Mahalle:</span> <span class="popup-val">${mahalle}</span></div>
-                        <div class="popup-row"><span class="popup-label">Öncelik:</span> <span class="popup-val" style="color:${color}">${priority}</span></div>
-                        <div class="popup-row"><span class="popup-label">Aşama:</span> <span class="popup-val">${status.toUpperCase()}</span></div>
-                    `;
-
-                    poly.bindPopup(popupContent);
-                    bounds.extend(poly.getBounds());
-                    hasBounds = true;
-                }
             });
 
-            if(hasBounds) {
-                map.fitBounds(bounds, { padding: [40, 40] });
-            } else {
-                showToast("Bu öncelikte haritada gösterilecek geometri bulunamadı.", "error");
-            }
-        }
-
-        window.showOnMap = function(thaId) {
-            const cleanId = normalizeId(thaId);
-            const coords = districtKMLs.get(cleanId);
-            
-            if(coords) {
-                const mapEl = document.getElementById('map');
-                const wasClosed = !mapEl.classList.contains('map-visible');
-                
-                openMap(); 
-                geoLayer.clearLayers();
-                
-                const parsel = currentData.find(p => normalizeId(p["THA ID"]) === cleanId);
-                const priority = parsel ? (parsel["Tescil Önceliği"] || "") : "";
-                const color = getPriorityColor(priority);
-                
-                const status = parsel ? (parsel["Onay Durumu"] || "Bekliyor") : "Bekliyor";
-                const mahalle = parsel ? (parsel["Mahallesi"] || "-") : "-";
-                const alan = parsel ? (parsel["Yüzölçümü (m²)"] || parsel["Yüzölçümü (m2)"] || "-") : "-";
-                const not = parsel ? (parsel["Kurum Bilgisi"] || "Not yok") : "-";
-
-                const poly = L.polygon(coords, { 
-                    color: color, 
-                    fillColor: color, 
-                    fillOpacity: 0.45,
-                    weight: 4 
-                }).addTo(geoLayer);
-
-                const popupContent = `
-                    <div class="popup-title">Parsel Bilgisi</div>
-                    <div class="popup-row"><span class="popup-label">ID:</span> <span class="popup-val">${cleanId}</span></div>
-                    <div class="popup-row"><span class="popup-label">Mahalle:</span> <span class="popup-val">${mahalle}</span></div>
-                    <div class="popup-row"><span class="popup-label">Alan:</span> <span class="popup-val">${alan} m²</span></div>
-                    <div class="popup-row"><span class="popup-label">Öncelik:</span> <span class="popup-val" style="color:${color}">${priority}</span></div>
-                    <div class="popup-row"><span class="popup-label">Aşama:</span> <span class="popup-val">${status.toUpperCase()}</span></div>
-                    <div class="mt-2 pt-2 border-t text-[10px] text-slate-500">
-                        <span class="font-bold">Kurum Notu:</span> ${not}
-                    </div>
-                `;
-
-                poly.bindPopup(popupContent);
-                
-                if(wasClosed) {
-                    setTimeout(() => {
-                        map.invalidateSize();
-                        map.fitBounds(poly.getBounds(), { padding: [50, 50], maxZoom: 18 });
-                    }, 450);
-                } else {
-                    map.fitBounds(poly.getBounds(), { padding: [50, 50], maxZoom: 18 });
-                }
-                
-            } else {
-                showToast("Geometri verisi dosyada bulunamadı.", "error");
-            }
-        }
-
-        function renderTableHeader() {
-            const header = document.getElementById('tableHeader');
-            const isAll = currentDistrict === "ALL";
-            header.innerHTML = `
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Harita</th>
-                ${isAll ? '<th class="p-3 md:p-4 text-[10px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50/50">İlçe</th>' : ''}
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">THA ID</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Öncelik</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mahalle</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tekniker</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mühendis</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alan (m²)</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nitelik</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Durum</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aşama</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">İşlem Tarihi</th>
-                <th class="p-3 md:p-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Notlar</th>
-            `;
-        }
-
-        window.filterLocalData = function() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const dateVal = document.getElementById('dateFilter').value;
-            const mahalleVal = document.getElementById('mahalleSelect').value; 
-            const teknikerVal = document.getElementById('teknikerSelect').value; 
-            
-            displayList = currentData.filter(row => {
-                if(priorityFilter === 'processed') {
-                    const st = String(row["Onay Durumu"] || "").trim();
-                    const isProcessed = st !== "" && st !== "Bekliyor";
-                    if(!isProcessed) return false;
-                    if(specificStatusFilter !== "all" && st !== specificStatusFilter) return false;
-                    if(districtLimitFilter !== "all" && row["_SOURCE_DISTRICT"] !== districtLimitFilter) return false;
-                } else if (priorityFilter !== 'all') {
-                    if(!String(row["Tescil Önceliği"]).includes(priorityFilter)) return false;
-                }
-                
-                if(mahalleVal !== "ALL" && (row["Mahallesi"] || "BİLİNMEYEN") !== mahalleVal) return false;
-                
-                if(teknikerVal !== "ALL" && (row["Tekniker"] || "Bilinmiyor") !== teknikerVal) return false;
-                
-                if(dateVal && row["İşlem Tarihi"] !== dateVal) return false;
-                
-                if(query) {
-                    const match = String(row["Mahallesi"]).toLowerCase().includes(query) || 
-                                  String(row["THA ID"]).includes(query) || 
-                                  String(row["Kurum Bilgisi"]).toLowerCase().includes(query); 
-                    if(!match) return false;
-                }
-                return true;
-            });
-
-            currentPage = 1;
-            document.getElementById('tableBody').innerHTML = "";
-            renderNextPage();
-        }
-
-        function getPriorityStyle(pStr) {
-            if(pStr.includes("1.")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
-            if(pStr.includes("2.")) return "bg-amber-50 text-amber-700 border-amber-200";
-            if(pStr.includes("3.")) return "bg-red-50 text-red-700 border-red-200";
-            return "bg-gray-50 text-gray-500 border-gray-200";
-        }
-
-        window.renderNextPage = function() {
-            const tbody = document.getElementById('tableBody');
-            const start = (currentPage - 1) * pageSize;
-            const end = start + pageSize;
-            const chunk = displayList.slice(start, end);
-            const isAllMode = currentDistrict === "ALL";
-
-            if(chunk.length === 0 && currentPage === 1) {
-                tbody.innerHTML = `<tr><td colspan="14" class="py-24 text-center opacity-30 italic font-bold">Kayıt bulunamadı.</td></tr>`;
-                document.getElementById('loadMoreArea').classList.add('hidden');
+            const districts = Object.keys(districtGroups).sort();
+            if(districts.length === 0) {
+                summaryBody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 italic font-medium">Özet veri bulunamadı.</td></tr>`;
                 return;
             }
 
-            const rowsHtml = chunk.map((row) => {
-                const globalIndex = currentData.indexOf(row);
-                const status = String(row["Onay Durumu"] || "Bekliyor").trim();
-                const isFinal = status === "Onaylandı(Firmaya İletildi)";
-                const alan = row["Yüzölçümü (m²)"] || row["Yüzölçümü (m2)"] || row["Alan"] || "-";
-                const thaId = row["THA ID"] || "";
-                const priority = row["Tescil Önceliği"] || "-";
-                const nitelik = row["Nitelik"] || "-";
-                const tekniker = row["Tekniker"] || "-";
-                const muhendis = row["Sorumlu Mühendis"] || "-";
+            const currentDistFilter = document.getElementById('ikaDistrictSelect').value;
+
+            summaryBody.innerHTML = districts.map(dist => {
+                const stats = districtGroups[dist];
+                const isActive = currentDistFilter === dist;
+                const rowClass = isActive ? "bg-indigo-50/40 border-l-4 border-indigo-500" : "hover:bg-slate-50/50 transition-colors";
                 
+                const mList = Object.keys(stats.mahalleler).sort();
+                const mahalleHtml = mList.map(m => {
+                    const ms = stats.mahalleler[m];
+                    return `
+                        <tr class="bg-slate-50 border-b border-slate-100 hover:bg-slate-100 transition-colors">
+                            <td class="p-2 pl-10 text-[11px] font-medium text-slate-500"><i class="fas fa-level-up-alt fa-rotate-90 mr-2 text-slate-300"></i>${m}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-slate-500 w-24">${ms.total}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-indigo-500 w-24">${ms.p1}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-amber-500 w-24">${ms.p2}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-red-500 w-24">${ms.p3}</td>
+                            <td class="p-2 text-center text-[11px] font-bold text-emerald-500 w-28">${ms.processed}</td>
+                        </tr>
+                    `;
+                }).join('');
+
                 return `
-                <tr id="row-${globalIndex}" class="transition-colors ${isFinal ? 'row-approved' : 'bg-white'} border-b border-slate-50 hover:bg-indigo-50/30 cursor-pointer" onclick="selectRow(${globalIndex})">
-                    <td class="p-2 text-center">
-                        <button onclick="event.stopPropagation(); showOnMap('${thaId}')" class="w-8 h-8 bg-white border border-slate-200 rounded-lg text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-                            <i class="fas fa-crosshairs text-xs"></i>
-                        </button>
-                    </td>
-                    ${isAllMode ? `<td class="p-3 md:p-4 text-[10px] font-black text-indigo-700 bg-indigo-50/20">${row["_SOURCE_DISTRICT"]}</td>` : ''}
-                    <td class="p-3 md:p-4 col-id text-[10px] md:text-xs">${thaId}</td>
-                    <td class="p-3 md:p-4">
-                        <span class="px-2 py-1 rounded text-[9px] font-bold border ${getPriorityStyle(priority)} whitespace-nowrap inline-block max-w-[100px] truncate" title="${priority}">
-                            ${priority}
-                        </span>
-                    </td>
-                    <td class="p-3 md:p-4 font-semibold text-slate-700 truncate max-w-[100px]">${row["Mahallesi"] || '-'}</td>
-                    <td class="p-3 md:p-4 text-[10px] font-medium text-slate-600 truncate max-w-[100px]" title="${tekniker}">${tekniker}</td>
-                    <td class="p-3 md:p-4 text-[10px] font-medium text-slate-500 truncate max-w-[100px]" title="${muhendis}">${muhendis}</td>
-                    <td class="p-3 md:p-4 col-alan font-mono text-[10px] md:text-xs font-bold">${alan}</td>
-                    <td class="p-3 md:p-4"><span class="text-[9px] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded shadow-sm text-slate-600 whitespace-nowrap inline-block max-w-[80px] truncate" title="${nitelik}">${nitelik}</span></td>
-                    <td class="p-3 md:p-4 text-center status-cell">
-                        <span class="px-2 py-0.5 rounded-full text-[8px] md:text-[9px] shadow-sm ${getStatusColor(status)}">
-                            ${status.toUpperCase()}
-                        </span>
-                    </td>
-                    <td class="p-3 md:p-4">
-                        <select onchange="updateRowStatus(${globalIndex}, this.value)" class="status-select w-full bg-slate-50 px-2 py-2 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
-                            ${STAGES.map(s => `<option value="${s}" ${s === status ? 'selected' : ''}>${s}</option>`).join('')}
-                        </select>
-                    </td>
-                    <td class="p-3 md:p-4">
-                        <input type="date" value="${row["İşlem Tarihi"] || ""}" onchange="updateRowDate(${globalIndex}, this.value)" class="date-input px-2 py-1 rounded-lg text-[10px] w-full">
-                    </td>
-                    <td class="p-3 md:p-4 min-w-[180px]">
-                        <input type="text" value="${row["Kurum Bilgisi"] || ''}" onchange="updateNote(${globalIndex}, this.value)" placeholder="Not..." class="note-input w-full bg-white px-3 py-1 rounded-lg text-xs font-medium text-slate-600">
-                    </td>
-                </tr>
+                    <tr class="${rowClass} cursor-pointer" onclick="handleDistrictRowClick('${dist}')">
+                        <td class="p-3 font-bold text-slate-700 flex items-center gap-2">
+                            <i id="icon-${dist}" class="fas fa-chevron-right text-[10px] text-slate-400 transition-transform ${isActive ? 'rotate-90' : ''}"></i>
+                            ${dist}
+                        </td>
+                        <td class="p-3 text-center font-bold text-slate-600 w-24">${stats.total}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/10 w-24">${stats.p1}</td>
+                        <td class="p-3 text-center font-bold text-amber-600 bg-amber-50/10 w-24">${stats.p2}</td>
+                        <td class="p-3 text-center font-bold text-red-600 bg-red-50/10 w-24">${stats.p3}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 bg-emerald-50/10 w-28">${stats.processed}</td>
+                    </tr>
+                    <tr id="subrow-${dist}" class="subtable-row ${isActive ? '' : 'hidden'}">
+                        <td colspan="6" class="p-0">
+                            <table class="w-full text-left">
+                                <tbody>
+                                    ${mahalleHtml}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
                 `;
             }).join('');
-
-            if(currentPage === 1) tbody.innerHTML = rowsHtml;
-            else tbody.insertAdjacentHTML('beforeend', rowsHtml);
-
-            const remaining = displayList.length - end;
-            if(remaining > 0) {
-                document.getElementById('loadMoreArea').classList.remove('hidden');
-                document.getElementById('remainingCount').innerText = remaining;
-            } else {
-                document.getElementById('loadMoreArea').classList.add('hidden');
-            }
-            currentPage++;
         }
 
-        window.selectRow = function(index) {
-            document.querySelectorAll('tr').forEach(r => r.classList.remove('row-selected'));
-            const row = document.getElementById(`row-${index}`);
-            if(row) row.classList.add('row-selected');
-        }
+        function updatePersonnelPanel() {
+            const personnelBody = document.getElementById('personnelTableBody');
+            const persGroups = {};
 
-        window.checkChangesAndFetch = function() {
-            if(isModified && !confirm("Kaydedilmemiş değişiklikler var. Devam edilsin mi?")) {
-                document.getElementById('districtSelect').value = currentDistrict;
+            ['2', '3'].forEach(p => {
+                ikaData[p].forEach(row => {
+                    let tek = row["Tekniker"] || "Bilinmiyor";
+                    let muh = row["Sorumlu Mühendis"] || "Bilinmiyor";
+                    
+                    let key = `${tek} / ${muh}`;
+
+                    if(!persGroups[key]) {
+                        persGroups[key] = { total: 0, processed: 0 };
+                    }
+                    
+                    persGroups[key].total++;
+                    
+                    const teslim = String(row["Firmaya Teslim Edildi"] || "").trim();
+                    if(teslim === "Evet") {
+                        persGroups[key].processed++;
+                    }
+                });
+            });
+
+            const keys = Object.keys(persGroups).sort();
+            if(keys.length === 0) {
+                personnelBody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic font-medium">Veri bulunamadı.</td></tr>`;
                 return;
             }
-            fetchDistrictData();
-        }
 
-        window.setTodayFilter = function() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('dateFilter').value = todayStr;
-            priorityFilter = "all";
-            specificStatusFilter = "all";
-            districtLimitFilter = "all";
-            updateCardHighlight("card-today");
-            document.getElementById('totalMenu').classList.remove('show');
-            document.getElementById('processedMenu').classList.remove('show');
-            filterLocalData();
-        }
-
-        window.setDistrictApprovedFilter = function(distName) {
-            priorityFilter = "processed";
-            specificStatusFilter = "all";
-            districtLimitFilter = distName;
-            updateCardHighlight("card-all");
-            document.getElementById('totalMenu').classList.remove('show');
-            filterLocalData();
-        }
-
-        window.setPriorityFilter = function(p) {
-            priorityFilter = p;
-            specificStatusFilter = "all";
-            districtLimitFilter = "all";
-            updateCardHighlight(p === 'all' ? 'card-all' : p === 'processed' ? 'card-processed' : p === '1.' ? 'card-p1' : p === '2.' ? 'card-p2' : 'card-p3');
-            filterLocalData();
-            if (p !== 'all' && p !== 'processed') {
-                showFilteredOnMap();
-            }
-        }
-
-        window.setStatusFilter = function(status) {
-            priorityFilter = "processed";
-            specificStatusFilter = status;
-            districtLimitFilter = "all";
-            updateCardHighlight("card-processed");
-            document.getElementById('processedMenu').classList.remove('show');
-            filterLocalData();
-        }
-
-        window.updateRowStatus = function(index, newStatus) {
-            currentData[index]["Onay Durumu"] = newStatus;
-            
-            if(newStatus !== "Bekliyor") {
-                currentData[index]["İşlem Tarihi"] = new Date().toISOString().split('T')[0];
-            } else {
-                currentData[index]["İşlem Tarihi"] = "";
-            }
-            
-            isModified = true;
-            updateSaveButton();
-            updateStats(currentData);
-            const rowEl = document.getElementById(`row-${index}`);
-            if(rowEl) {
-                const statusCell = rowEl.querySelector('.status-cell');
-                statusCell.innerHTML = `<span class="px-2 py-0.5 rounded-full text-[8px] md:text-[9px] shadow-sm ${getStatusColor(newStatus)}">${newStatus.toUpperCase()}</span>`;
+            personnelBody.innerHTML = keys.map(k => {
+                const stats = persGroups[k];
+                const kalan = stats.total - stats.processed;
                 
-                const dateInput = rowEl.querySelector('.date-input');
-                if(dateInput) {
-                    dateInput.value = currentData[index]["İşlem Tarihi"];
-                }
-
-                if(newStatus === "Onaylandı(Firmaya İletildi)") rowEl.classList.add('row-approved');
-                else rowEl.classList.remove('row-approved');
-            }
-        }
-
-        window.updateRowDate = function(index, newDate) {
-            currentData[index]["İşlem Tarihi"] = newDate;
-            isModified = true;
-            updateSaveButton();
-            updateStats(currentData);
-        }
-
-        window.updateNote = function(index, val) {
-            currentData[index]["Kurum Bilgisi"] = val;
-            isModified = true;
-            updateSaveButton();
-        }
-
-        window.saveChangesToGitHub = async function() {
-            if(!isModified) return;
-            toggleLoader(true, "Veriler GitHub'a Kaydediliyor...");
-            try {
-                const modifiedDistricts = [...new Set(currentData.map(r => r["_SOURCE_DISTRICT"]))];
-                for (const dist of modifiedDistricts) {
-                    const distData = currentData.filter(r => r["_SOURCE_DISTRICT"] === dist);
-                    const cleanData = distData.map(({_SOURCE_DISTRICT, Tekniker, "Sorumlu Mühendis": SorumluMuhendis, ...rest}) => rest);
-                    const worksheet = XLSX.utils.json_to_sheet(cleanData);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, dist.toUpperCase());
-                    const excelBinary = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
-                    
-                    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${dist.toUpperCase()}.xlsx`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            message: `THA Update: ${dist}`,
-                            content: excelBinary,
-                            sha: districtFileShas[dist],
-                            branch: GITHUB_BRANCH
-                        })
-                    });
-                    
-                    if(response.ok) {
-                        const res = await response.json();
-                        districtFileShas[dist] = res.content.sha;
-                    }
-                }
-                isModified = false;
-                updateSaveButton();
-                showToast("Tüm Değişiklikler Kaydedildi!");
-            } catch (err) { showToast("Kayıt hatası.", "error"); } finally { toggleLoader(false); }
+                return `
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="p-3 font-bold text-slate-700">${k}</td>
+                        <td class="p-3 text-center font-bold text-slate-600 w-24">${stats.total}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 bg-emerald-50/10 w-28">${stats.processed}</td>
+                        <td class="p-3 text-center font-bold text-amber-600 bg-amber-50/10 w-24">${kalan}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         window.addEventListener('beforeunload', (e) => { 
-            if (isModified || isIkaModified['1'] || isIkaModified['2'] || isIkaModified['3']) { 
+            if (isIkaModified['1'] || isIkaModified['2'] || isIkaModified['3']) { 
                 e.preventDefault(); e.returnValue = ''; 
             } 
         });
