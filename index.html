@@ -162,7 +162,7 @@
                         </div>
                         <div class="flex items-center gap-4">
                             <!-- GİZLİ SİHİRLİ BUTON (Sadece "personel" kelimesi aranırsa görünür) -->
-                            <span id="magicDistributeBtn" onclick="event.stopPropagation(); distributePersonnelEqually()" class="hidden bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-amber-600 hover:text-white transition-all shadow-sm items-center gap-1">
+                            <span id="magicDistributeBtn" onclick="event.stopPropagation(); distributePersonnelEqually()" class="hidden bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-amber-600 hover:text-white transition-all shadow-sm items-center gap-1" style="display: none;">
                                 <i class="fas fa-balance-scale"></i> İş Yükünü Eşitle (Excel)
                             </span>
                             <i id="personnelToggleIcon" class="fas fa-chevron-down text-slate-400 transition-transform"></i>
@@ -260,7 +260,7 @@
                         </div>
                     </button>
                     <div id="ikaTableWrapper1" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
-                        <table class="w-full text-left border-collapse min-w-[1400px]">
+                        <table class="w-full text-left border-collapse min-w-[1200px]">
                             <thead class="bg-indigo-50/50 sticky top-0 z-10 border-b border-indigo-100">
                                 <tr>
                                     <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
@@ -296,7 +296,7 @@
                         </div>
                     </button>
                     <div id="ikaTableWrapper2" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
-                        <table class="w-full text-left border-collapse min-w-[1600px]">
+                        <table class="w-full text-left border-collapse min-w-[1400px]">
                             <thead class="bg-amber-50/50 sticky top-0 z-10 border-b border-amber-100">
                                 <tr>
                                     <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
@@ -334,7 +334,7 @@
                         </div>
                     </button>
                     <div id="ikaTableWrapper3" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
-                        <table class="w-full text-left border-collapse min-w-[1800px]">
+                        <table class="w-full text-left border-collapse min-w-[1500px]">
                             <thead class="bg-red-50/50 sticky top-0 z-10 border-b border-red-100">
                                 <tr>
                                     <th class="p-3 md:p-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider w-16">ID</th>
@@ -409,7 +409,7 @@
                     window.initializeApp();
                 }, 500);
             } else {
-                showToast("Hatalı kullanıcı adı veya şifre!", "error");
+                window.showToast("Hatalı kullanıcı adı veya şifre!", "error");
             }
         }
 
@@ -419,18 +419,18 @@
         }
 
         window.initializeApp = async function() {
-            toggleLoader(true, "Sistem ve Personel Verileri Yükleniyor...");
-            await fetchRepoCache();
-            await fetchPersonnelData();
-            toggleLoader(false);
-            fetchIkaData(); 
+            window.toggleLoader(true, "Sistem ve Personel Verileri Yükleniyor...");
+            await window.fetchRepoCache();
+            await window.fetchPersonnelData();
+            window.toggleLoader(false);
+            window.fetchIkaData(); 
         }
 
-        function safeFileName(str) {
+        window.safeFileName = function(str) {
             return str.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').toUpperCase();
         }
 
-        function normalizeId(id) {
+        window.normalizeId = function(id) {
             if (id === null || id === undefined) return "";
             let s = String(id).trim();
             if (s.toLowerCase().includes('e')) {
@@ -443,7 +443,7 @@
             return s.replace(/\D/g, '');
         }
 
-        async function fetchRepoCache() {
+        window.fetchRepoCache = async function() {
             if (repoFilesCache.length > 0) return true;
             try {
                 const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`, { headers: { 'Authorization': `token ${GITHUB_TOKEN}` } });
@@ -455,20 +455,20 @@
                 }
             } catch (e) { 
                 console.error("Repo cache hatası:", e); 
-                showToast(e.message || "GitHub'a bağlanılamadı.", "error", 6000);
+                window.showToast(e.message || "GitHub'a bağlanılamadı.", "error", 6000);
                 return false;
             }
         }
 
-        function getFileInfo(name, ext) {
+        window.getFileInfo = function(name, ext) {
             const d1 = name.toLowerCase() + ext;
-            const d2 = safeFileName(name).toLowerCase() + ext;
+            const d2 = window.safeFileName(name).toLowerCase() + ext;
             return repoFilesCache.find(f => f.name.toLowerCase() === d1 || f.name.toLowerCase() === d2);
         }
 
-        async function fetchPersonnelData() {
+        window.fetchPersonnelData = async function() {
             try {
-                const fileObj = getFileInfo('personel_listesi', '.xlsx');
+                const fileObj = window.getFileInfo('personel_listesi', '.xlsx');
                 if (!fileObj) return;
 
                 const response = await fetch(fileObj.download_url);
@@ -492,7 +492,7 @@
                         }
 
                         if (idListesi) {
-                            const ids = idListesi.split(',').map(id => normalizeId(id));
+                            const ids = idListesi.split(',').map(id => window.normalizeId(id));
                             ids.forEach(id => {
                                 if (id) {
                                     personnelIdMap[id] = { t: tekniker, m: muhendis };
@@ -506,13 +506,13 @@
             }
         }
 
-        const toggleLoader = (show, text = "İşlem Yapılıyor") => {
+        window.toggleLoader = function(show, text = "İşlem Yapılıyor") {
             const l = document.getElementById('loader');
             if (text) document.getElementById('loaderText').innerText = text;
             l.classList.toggle('hidden', !show);
         };
 
-        const showToast = (msg, type = "success", duration = 4000) => {
+        window.showToast = function(msg, type = "success", duration = 4000) {
             const t = document.getElementById('toast');
             t.innerText = msg;
             t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl shadow-2xl text-white text-[11px] font-bold transition-all z-[1100] ${type === 'success' ? 'bg-indigo-600' : 'bg-red-500'}`;
@@ -520,10 +520,6 @@
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, duration);
         };
 
-        // ==========================================
-        // İKA TAKİP MANTIĞI 
-        // ==========================================
-        
         window.toggleIkaTable = function(priority) {
             ['1', '2', '3'].forEach(p => {
                 const wrapper = document.getElementById('ikaTableWrapper' + p);
@@ -544,10 +540,10 @@
             });
         }
 
-        async function fetchIkaData() {
-            toggleLoader(true, "Tüm İKA Verileri İndiriliyor...");
+        window.fetchIkaData = async function() {
+            window.toggleLoader(true, "Tüm İKA Verileri İndiriliyor...");
             try {
-                if (repoFilesCache.length === 0) await fetchRepoCache();
+                if (repoFilesCache.length === 0) await window.fetchRepoCache();
                 
                 const priorities = ['1', '2', '3'];
                 
@@ -563,9 +559,8 @@
                             const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                             let parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 1, defval: "" });
                             
-                            // Personel verilerini enjekte et
                             ikaData[p] = parsedData.map(row => {
-                                const pId = normalizeId(row["ID"]);
+                                const pId = window.normalizeId(row["ID"]);
                                 const pKey = `${String(row["İlçe"] || "").toUpperCase().trim()}_${String(row["Mahalle"] || "").toUpperCase().trim()}`;
                                 
                                 let pInfo = { t: "-", m: "-" };
@@ -591,16 +586,15 @@
                 window.updateIkaStats();
             } catch (err) {
                 console.error("İKA Verisi Çekme Hatası: ", err);
-                showToast("İKA Verisi alınırken bir hata oluştu.", "error");
+                window.showToast("İKA Verisi alınırken bir hata oluştu.", "error");
             } finally {
-                toggleLoader(false);
+                window.toggleLoader(false);
             }
         }
 
         window.populateIkaDropdowns = function() {
             const allData = [...ikaData['1'], ...ikaData['2'], ...ikaData['3']];
             
-            // Mahalle
             const mSelect = document.getElementById('mahalleSelect');
             mSelect.innerHTML = '<option value="ALL">TÜM MAHALLELER</option>';
             mSelect.disabled = false;
@@ -610,7 +604,6 @@
                 mSelect.innerHTML += `<option value="${m}">${m}</option>`;
             });
 
-            // Tekniker
             const tSelect = document.getElementById('teknikerSelect');
             tSelect.innerHTML = '<option value="ALL">TÜM TEKNİKERLER</option>';
             tSelect.disabled = false;
@@ -630,7 +623,6 @@
             const tFilter = document.getElementById('teknikerSelect').value;
             const query = document.getElementById('ikaSearchInput').value.toLowerCase().trim();
             
-            // Sihirli Buton Mantığı (Sadece arama kutusuna 'personel' yazılınca görünür)
             const magicBtn = document.getElementById('magicDistributeBtn');
             if (query === 'personel') {
                 magicBtn.classList.remove('hidden');
@@ -646,7 +638,7 @@
                     if (mFilter !== "ALL" && String(row["Mahalle"] || "").toUpperCase() !== mFilter) return false;
                     if (tFilter !== "ALL" && String(row["Tekniker"] || "") !== tFilter) return false;
                     
-                    if (query && query !== 'personel') { // 'personel' kelimesi sadece butonu açmak için
+                    if (query && query !== 'personel') { 
                         const mMatch = String(row["Mahalle"] || "").toLowerCase().includes(query);
                         const iMatch = String(row["ID"] || "").toLowerCase().includes(query);
                         const tMatch = String(row["Tescil Tipi"] || "").toLowerCase().includes(query);
@@ -679,8 +671,7 @@
                 const hasBakanlik = (p === '1');
                 const hasKurum = (p === '3');
                 
-                // Dinamik kolon sayısı hesabı (Empty state mesajı için)
-                let colSpan = 10; // Base: ID, İlçe, Mahalle, Tek, Muh, Tescil, KontrolA, Teslim, TescileG, İlişkili
+                let colSpan = 10; 
                 if (hasBakanlik) colSpan += 1;
                 if (hasArazi) colSpan += 2;
                 if (hasDava) colSpan += 1;
@@ -726,9 +717,20 @@
                     <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td class="p-2 md:p-3 col-id text-[10px] md:text-xs">${id}</td>
                         <td class="p-2 md:p-3 font-black text-indigo-700 bg-indigo-50/10 text-[10px]">${ilce}</td>
-                        <td class="p-2 md:p-3 font-semibold text-slate-700 text-[10px] md:text-xs">${mahalle}</td>
+                        <td class="p-2 md:p-3 font-semibold text-slate-700 text-[10px] md:text-xs">${mahalle}</td>`;
+                    
+                    if(p !== '1') {
+                        rowHtml += `
                         <td class="p-2 md:p-3 text-[10px] font-medium text-slate-600 truncate max-w-[100px]" title="${tekniker}">${tekniker}</td>
-                        <td class="p-2 md:p-3 text-[10px] font-medium text-slate-500 truncate max-w-[100px]" title="${muhendis}">${muhendis}</td>
+                        <td class="p-2 md:p-3 text-[10px] font-medium text-slate-500 truncate max-w-[100px]" title="${muhendis}">${muhendis}</td>`;
+                    }
+                    else {
+                        rowHtml += `
+                        <td class="p-2 md:p-3 text-[10px] font-medium text-slate-400 text-center">-</td>
+                        <td class="p-2 md:p-3 text-[10px] font-medium text-slate-400 text-center">-</td>`;
+                    }
+
+                    rowHtml += `
                         <td class="p-2 md:p-3 font-semibold text-slate-600 text-[10px] md:text-xs">${tescilTipi}</td>`;
                         
                     if (hasArazi) {
@@ -897,7 +899,7 @@
             const anyModified = isIkaModified['1'] || isIkaModified['2'] || isIkaModified['3'];
             if(!anyModified) return;
             
-            toggleLoader(true, "İKA Verileri Kaydediliyor...");
+            window.toggleLoader(true, "İKA Verileri Kaydediliyor...");
             
             try {
                 const priorities = ['1', '2', '3'];
@@ -946,12 +948,12 @@
                 }
                 
                 window.updateIkaSaveButton();
-                showToast("İKA Değişiklikleri Başarıyla Kaydedildi!");
+                window.showToast("İKA Değişiklikleri Başarıyla Kaydedildi!");
             } catch (err) {
                 console.error(err);
-                showToast("Kayıt sırasında hata oluştu.", "error");
+                window.showToast("Kayıt sırasında hata oluştu.", "error");
             } finally {
-                toggleLoader(false);
+                window.toggleLoader(false);
             }
         }
 
@@ -977,7 +979,7 @@
             });
 
             if (!hasData) {
-                showToast("İndirilecek veri bulunamadı!", "error");
+                window.showToast("İndirilecek veri bulunamadı!", "error");
                 return;
             }
 
@@ -986,105 +988,9 @@
             
             try {
                 XLSX.writeFile(workbook, fileName);
-                showToast("Excel başarıyla indirildi.");
+                window.showToast("Excel başarıyla indirildi.");
             } catch(e) {
-                showToast("İndirme hatası", "error");
-            }
-        }
-
-        window.distributePersonnelEqually = function() {
-            if (ikaData['2'].length === 0 && ikaData['3'].length === 0) {
-                showToast("Önce verilerin yüklenmesini bekleyin.", "error");
-                return;
-            }
-
-            const districtMahalleIDs = {};
-            ['2', '3'].forEach(p => { 
-                ikaData[p].forEach(row => {
-                    const ilce = String(row["İlçe"] || "").trim().toUpperCase();
-                    const mahalle = String(row["Mahalle"] || "").trim().toUpperCase();
-                    const id = normalizeId(row["ID"]);
-                    if (ilce && mahalle && id) {
-                        if (!districtMahalleIDs[ilce]) districtMahalleIDs[ilce] = {};
-                        if (!districtMahalleIDs[ilce][mahalle]) districtMahalleIDs[ilce][mahalle] = [];
-                        if (!districtMahalleIDs[ilce][mahalle].includes(id)) {
-                            districtMahalleIDs[ilce][mahalle].push(id);
-                        }
-                    }
-                });
-            });
-
-            const hardcodedTeams = {
-                "AKDENİZ": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
-                "YENİŞEHİR": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
-                "TOROSLAR": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
-                "MEZİTLİ": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
-                "TARSUS": [{t: "BARIŞ YAYLAGÜL", m: "TAHA GÜRKAN"}, {t: "MAHMUT MELEMEN", m: "TAHA GÜRKAN"}],
-                "ÇAMLIYAYLA": [{t: "BARIŞ YAYLAGÜL", m: "TAHA GÜRKAN"}, {t: "MAHMUT MELEMEN", m: "TAHA GÜRKAN"}],
-                "SİLİFKE": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
-                "AYDINCIK": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
-                "GÜLNAR": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
-                "BOZYAZI": [{t: "HÜSEYİN BÜYÜK", m: "HİKMET GÜLCAN"}, {t: "SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN"}],
-                "ANAMUR": [{t: "HÜSEYİN BÜYÜK", m: "HİKMET GÜLCAN"}, {t: "SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN"}],
-                "MUT": [{t: "ÖMER ÇEVİK", m: "HİLMİ MÜFTÜOĞLU"}],
-                "ERDEMLİ": [{t: "SERDAR ARSLAN", m: "ÖZKAN AKBAŞ"}]
-            };
-
-            const exportData = [];
-
-            Object.keys(districtMahalleIDs).sort().forEach(ilce => {
-                let teams = hardcodedTeams[ilce] || [];
-                const mahalleler = districtMahalleIDs[ilce];
-
-                Object.keys(mahalleler).sort().forEach(mahalle => {
-                    const ids = mahalleler[mahalle];
-                    
-                    if (teams.length === 0) {
-                        exportData.push({
-                            "İlçe": ilce,
-                            "Tekniker": "Bilinmiyor",
-                            "Sorumlu Mühendis": "Bilinmiyor",
-                            "Mahalle": mahalle,
-                            "ID Listesi": ids.join(', ')
-                        });
-                        return;
-                    }
-
-                    const teamCount = teams.length;
-                    const baseSize = Math.floor(ids.length / teamCount);
-                    let remainder = ids.length % teamCount;
-
-                    let startIndex = 0;
-                    teams.forEach(team => {
-                        let currentChunkSize = baseSize + (remainder > 0 ? 1 : 0);
-                        remainder--;
-
-                        const chunkIds = ids.slice(startIndex, startIndex + currentChunkSize);
-                        startIndex += currentChunkSize;
-
-                        if (chunkIds.length > 0) {
-                            exportData.push({
-                                "İlçe": ilce,
-                                "Tekniker": team.t,
-                                "Sorumlu Mühendis": team.m,
-                                "Mahalle": mahalle,
-                                "ID Listesi": chunkIds.join(', ')
-                            });
-                        }
-                    });
-                });
-            });
-
-            const workbook = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            XLSX.utils.book_append_sheet(workbook, ws, "Personel Dagitimi");
-            
-            try {
-                const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-                XLSX.writeFile(workbook, `Yeni_Personel_Listesi_${dateStr}.xlsx`);
-                showToast("Yeni personel listesi indirildi! GitHub'a yükleyebilirsiniz.");
-            } catch(e) {
-                showToast("İndirme hatası", "error");
+                window.showToast("İndirme hatası", "error");
             }
         }
 
@@ -1115,7 +1021,7 @@
         window.exportSummaryToExcel = function() {
             const allData = [...ikaData['1'], ...ikaData['2'], ...ikaData['3']];
             if(allData.length === 0) {
-                showToast("Dışa aktarılacak özet veri yok!", "error");
+                window.showToast("Dışa aktarılacak özet veri yok!", "error");
                 return;
             }
 
@@ -1199,9 +1105,9 @@
             try {
                 const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
                 XLSX.writeFile(workbook, `IKA_Detayli_Ozet_Raporu_${dateStr}.xlsx`);
-                showToast("Detaylı özet tablo başarıyla indirildi.");
+                window.showToast("Detaylı özet tablo başarıyla indirildi.");
             } catch (error) {
-                showToast("İndirme sırasında bir hata oluştu.", "error");
+                window.showToast("İndirme sırasında bir hata oluştu.", "error");
             }
         }
 
@@ -1350,6 +1256,113 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        window.distributePersonnelEqually = function() {
+            if (ikaData['2'].length === 0 && ikaData['3'].length === 0) {
+                window.showToast("Önce verilerin yüklenmesini bekleyin.", "error");
+                return;
+            }
+
+            const districtMahalleItems = {};
+            ['2', '3'].forEach(p => { 
+                ikaData[p].forEach(row => {
+                    const ilce = String(row["İlçe"] || "").trim().toUpperCase();
+                    const mahalle = String(row["Mahalle"] || "").trim().toUpperCase();
+                    const id = window.normalizeId(row["ID"]);
+                    if (ilce && mahalle && id) {
+                        if (!districtMahalleItems[ilce]) districtMahalleItems[ilce] = {};
+                        if (!districtMahalleItems[ilce][mahalle]) districtMahalleItems[ilce][mahalle] = [];
+                        
+                        if (!districtMahalleItems[ilce][mahalle].find(item => item.id === id)) {
+                            districtMahalleItems[ilce][mahalle].push({ id: id, priority: p });
+                        }
+                    }
+                });
+            });
+
+            const hardcodedTeams = {
+                "AKDENİZ": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
+                "YENİŞEHİR": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
+                "TOROSLAR": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
+                "MEZİTLİ": [{t: "HASAN İN", m: "TEVFİK YILDIZ"}, {t: "A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ"}],
+                "TARSUS": [{t: "BARIŞ YAYLAGÜL", m: "TAHA GÜRKAN"}, {t: "MAHMUT MELEMEN", m: "TAHA GÜRKAN"}],
+                "ÇAMLIYAYLA": [{t: "BARIŞ YAYLAGÜL", m: "TAHA GÜRKAN"}, {t: "MAHMUT MELEMEN", m: "TAHA GÜRKAN"}],
+                "SİLİFKE": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
+                "AYDINCIK": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
+                "GÜLNAR": [{t: "NEZİHE GÜLMEZ", m: "VOLKAN İZCİ"}, {t: "MURAT SARI", m: "VOLKAN İZCİ"}],
+                "BOZYAZI": [{t: "HÜSEYİN BÜYÜK", m: "HİKMET GÜLCAN"}, {t: "SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN"}],
+                "ANAMUR": [{t: "HÜSEYİN BÜYÜK", m: "HİKMET GÜLCAN"}, {t: "SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN"}],
+                "MUT": [{t: "ÖMER ÇEVİK", m: "HİLMİ MÜFTÜOĞLU"}],
+                "ERDEMLİ": [{t: "SERDAR ARSLAN", m: "ÖZKAN AKBAŞ"}]
+            };
+
+            const exportData = [];
+
+            Object.keys(districtMahalleItems).sort().forEach(ilce => {
+                let teams = hardcodedTeams[ilce] || [];
+                const mahalleler = districtMahalleItems[ilce];
+
+                Object.keys(mahalleler).sort().forEach(mahalle => {
+                    const items = mahalleler[mahalle];
+                    
+                    if (teams.length === 0) {
+                        const p2Count = items.filter(i => i.priority === '2').length;
+                        const p3Count = items.filter(i => i.priority === '3').length;
+                        exportData.push({
+                            "İlçe": ilce,
+                            "Tekniker": "Bilinmiyor",
+                            "Sorumlu Mühendis": "Bilinmiyor",
+                            "Mahalle": mahalle,
+                            "2. Öncelik": p2Count,
+                            "3. Öncelik": p3Count,
+                            "Toplam": items.length,
+                            "ID Listesi": items.map(i => i.id).join(', ')
+                        });
+                        return;
+                    }
+
+                    const teamCount = teams.length;
+                    const baseSize = Math.floor(items.length / teamCount);
+                    let remainder = items.length % teamCount;
+
+                    let startIndex = 0;
+                    teams.forEach(team => {
+                        let currentChunkSize = baseSize + (remainder > 0 ? 1 : 0);
+                        remainder--;
+
+                        const chunkItems = items.slice(startIndex, startIndex + currentChunkSize);
+                        startIndex += currentChunkSize;
+
+                        if (chunkItems.length > 0) {
+                            const p2Count = chunkItems.filter(i => i.priority === '2').length;
+                            const p3Count = chunkItems.filter(i => i.priority === '3').length;
+                            exportData.push({
+                                "İlçe": ilce,
+                                "Tekniker": team.t,
+                                "Sorumlu Mühendis": team.m,
+                                "Mahalle": mahalle,
+                                "2. Öncelik": p2Count,
+                                "3. Öncelik": p3Count,
+                                "Toplam": chunkItems.length,
+                                "ID Listesi": chunkItems.map(i => i.id).join(', ')
+                            });
+                        }
+                    });
+                });
+            });
+
+            const workbook = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(workbook, ws, "Personel Dagitimi");
+            
+            try {
+                const dateStr = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
+                XLSX.writeFile(workbook, `Yukum_Personel_Listesi_${dateStr}.xlsx`);
+                window.showToast("Personel dağılım listesi indirildi!");
+            } catch(e) {
+                window.showToast("İndirme hatası", "error");
+            }
         }
 
         window.addEventListener('beforeunload', (e) => { 
