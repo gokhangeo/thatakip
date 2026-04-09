@@ -344,6 +344,38 @@
 
         <!-- İKA TAKİP GÖRÜNÜMÜ -->
         <div id="ikaView" class="hidden flex flex-col flex-grow">
+            
+            <!-- İKA İstatistikleri -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" id="ikaStatsContainer">
+                <div class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-indigo-500">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Toplam İKA Kaydı</p>
+                    <h3 id="ikaStatTotal" class="text-xl md:text-2xl font-black text-indigo-600 leading-none mt-1">0</h3>
+                </div>
+                <div class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-emerald-500">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">İşlem Yapılan</p>
+                    <h3 id="ikaStatProcessed" class="text-xl md:text-2xl font-black text-emerald-600 leading-none mt-1">0</h3>
+                </div>
+                <div class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-amber-500">
+                    <div class="relative group">
+                        <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight cursor-pointer" onclick="toggleIkaDistrictMenu()">
+                            <p>İlçelere Göre Dağılım</p>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <h3 id="ikaStatDistricts" class="text-xl md:text-2xl font-black text-amber-600 leading-none mt-1">0</h3>
+                        <div id="ikaDistrictMenu" class="dropdown-menu absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] p-2 min-w-[200px] max-h-[250px] overflow-y-auto custom-scrollbar">
+                            <div id="ikaDistrictList" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white p-3 md:p-4 rounded-2xl border border-slate-100 shadow-sm border-l-4 border-l-sky-500">
+                    <div class="flex justify-between items-start text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                        <p>Bugün Yapılan</p>
+                        <i class="fas fa-calendar-day text-sky-500"></i>
+                    </div>
+                    <h3 id="ikaStatToday" class="text-xl md:text-2xl font-black text-sky-600 leading-none mt-1">0</h3>
+                </div>
+            </div>
+
             <!-- İKA Kontrolleri -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mb-6">
                 <div class="md:col-span-3">
@@ -596,6 +628,7 @@
                     isIkaModified = false;
                     updateIkaSaveButton();
                     filterIkaData();
+                    updateIkaStats();
                 } else {
                     showToast("İKA dosyası okunamadı.", "error");
                 }
@@ -618,7 +651,10 @@
                     const mMatch = String(row["Mahalle"] || "").toLowerCase().includes(query);
                     const iMatch = String(row["ID"] || "").toLowerCase().includes(query);
                     const tMatch = String(row["Tescil Tipi"] || "").toLowerCase().includes(query);
-                    const aMatch = String(row["Kontrol Açıklama (İptal ise nedeni/Firmaya Teslim Edildi)"] || "").toLowerCase().includes(query);
+                    
+                    const aciklamaKey = Object.keys(row).find(k => k.includes("Kontrol Açıklama"));
+                    const aMatch = String(aciklamaKey ? row[aciklamaKey] : "").toLowerCase().includes(query);
+                    
                     if (!(mMatch || iMatch || tMatch || aMatch)) return false;
                 }
                 return true;
@@ -652,7 +688,11 @@
                 const tescilTipi = row["Tescil Tipi"] || "";
                 const araziOlcuGerekliMi = String(row["Arazi Ölçü Gerekiyor mu"] || "").trim();
                 const araziOlcuDurumu = row["Arazi Ölçüsü Durumu"] || "";
-                const aciklama = row["Kontrol Açıklama (İptal ise nedeni/Firmaya Teslim Edildi)"] || "";
+                
+                // Excel'deki uzun ve boşluklu başlık sorunu için dinamik anahtar bulma
+                const aciklamaKey = Object.keys(row).find(k => k.includes("Kontrol Açıklama")) || "Kontrol Açıklama (İptal ise nedeni/Firmaya Teslim Edildi)";
+                const aciklama = row[aciklamaKey] || "";
+                
                 const iliskiliParsel = row["İlişkili Parsel"] || "";
 
                 return `
@@ -662,8 +702,8 @@
                     <td class="p-2 md:p-3">
                         <input type="text" value="${mahalle}" onchange="updateIkaRow(${globalIndex}, 'Mahalle', this.value)" class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-700">
                     </td>
-                    <td class="p-2 md:p-3">
-                        <input type="text" value="${tescilTipi}" onchange="updateIkaRow(${globalIndex}, 'Tescil Tipi', this.value)" class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
+                    <td class="p-2 md:p-3 font-semibold text-slate-600 text-[10px] md:text-xs">
+                        ${tescilTipi}
                     </td>
                     <td class="p-2 md:p-3 text-center">
                         <select onchange="updateIkaRow(${globalIndex}, 'Arazi Ölçü Gerekiyor mu', this.value)" class="ika-input bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
@@ -676,7 +716,7 @@
                         <input type="text" value="${araziOlcuDurumu}" onchange="updateIkaRow(${globalIndex}, 'Arazi Ölçüsü Durumu', this.value)" placeholder="Örn: Tamamlandı..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
                     </td>
                     <td class="p-2 md:p-3">
-                        <input type="text" value="${aciklama}" onchange="updateIkaRow(${globalIndex}, 'Kontrol Açıklama (İptal ise nedeni/Firmaya Teslim Edildi)', this.value)" placeholder="Açıklama giriniz..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
+                        <input type="text" value="${aciklama}" onchange="updateIkaRow(${globalIndex}, '${aciklamaKey}', this.value)" placeholder="Açıklama giriniz..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
                     </td>
                     <td class="p-2 md:p-3">
                         <input type="text" value="${iliskiliParsel}" onchange="updateIkaRow(${globalIndex}, 'İlişkili Parsel', this.value)" placeholder="Parsel..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
@@ -690,8 +730,59 @@
 
         function updateIkaRow(index, field, value) {
             ikaData[index][field] = value;
+            
+            // Sadece bu oturumda "Bugün Yapılan" sayısını tutmak için eklendi (Excel'e kaydedilmez)
+            ikaData[index]["_UpdateDateLocal"] = new Date().toISOString().split('T')[0]; 
+            
             isIkaModified = true;
             updateIkaSaveButton();
+            updateIkaStats();
+        }
+
+        function updateIkaStats() {
+            document.getElementById('ikaStatTotal').innerText = ikaData.length;
+            
+            let islemYapilanSayisi = 0;
+            let bugunYapilan = 0;
+            let districtCounts = {};
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            ikaData.forEach(row => {
+                const ilce = String(row["İlçe"] || "").toUpperCase();
+                if(ilce) {
+                    districtCounts[ilce] = (districtCounts[ilce] || 0) + 1;
+                }
+
+                const aciklamaKey = Object.keys(row).find(k => k.includes("Kontrol Açıklama"));
+                const aciklama = String(aciklamaKey ? row[aciklamaKey] : "").trim();
+                const olcuDurumu = String(row["Arazi Ölçüsü Durumu"] || "").trim();
+                
+                if(aciklama !== "" || olcuDurumu !== "") {
+                    islemYapilanSayisi++;
+                }
+
+                if(row["_UpdateDateLocal"] === todayStr) {
+                    bugunYapilan++;
+                }
+            });
+
+            document.getElementById('ikaStatProcessed').innerText = islemYapilanSayisi;
+            document.getElementById('ikaStatToday').innerText = bugunYapilan;
+            document.getElementById('ikaStatDistricts').innerText = Object.keys(districtCounts).length + " İlçe";
+
+            const distListHtml = Object.keys(districtCounts).sort().map(d => `
+                <div class="flex justify-between items-center px-2 py-1 text-[11px] border-b border-slate-50 last:border-0">
+                    <span class="text-slate-600 font-medium">${d}</span>
+                    <span class="bg-amber-50 text-amber-600 px-2 rounded-full font-bold">${districtCounts[d]}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('ikaDistrictList').innerHTML = distListHtml;
+        }
+
+        function toggleIkaDistrictMenu() {
+            document.getElementById('ikaDistrictMenu').classList.toggle('show');
         }
 
         function updateIkaSaveButton() {
@@ -713,9 +804,15 @@
             toggleLoader(true, "İKA Verileri Kaydediliyor...");
             
             try {
-                // Orijinal ilk satırı eklemek için AoA ve sheet_add_json kullanıyoruz.
+                // Temizlenmiş veriyi kaydet (Sadece excelde var olması gerekenler)
+                const cleanIkaData = ikaData.map(row => {
+                    const newRow = {...row};
+                    delete newRow["_UpdateDateLocal"]; // Geçici veriyi sil
+                    return newRow;
+                });
+
                 const ws = XLSX.utils.aoa_to_sheet([["2. ÖNCELİK(PLANLI)", "", "", "", "", "", "", ""]]);
-                XLSX.utils.sheet_add_json(ws, ikaData, { origin: "A2" });
+                XLSX.utils.sheet_add_json(ws, cleanIkaData, { origin: "A2" });
                 
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, ws, "THA Değerlendirme");
@@ -1242,6 +1339,7 @@
                     }
                 }
 
+                document.getElementById('lastUpdateInfo').innerText = `${district === 'ALL' ? 'MERSİN GENELİ' : district} GÜNCEL: ${new Date().toLocaleTimeString('tr-TR')}`;
             } catch (error) {
                 console.error(error);
                 showToast(error.message || "İşlem sırasında beklenmeyen bir hata oluştu.", "error");
