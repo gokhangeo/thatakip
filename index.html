@@ -377,11 +377,24 @@
         const GITHUB_REPO = "gokhangeo/thatakip";
         const GITHUB_BRANCH = "main";
 
-        let repoFilesCache = []; 
-        let personnelIdMap = {};
-        let personnelMahalleMap = {};
+        // Koda Sabitlenmiş İlçe Bazlı Personel Dağılımı
+        const hardcodedPersonnel = {
+            "AKDENİZ": { t: "HASAN İN, A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ" },
+            "YENİŞEHİR": { t: "HASAN İN, A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ" },
+            "TOROSLAR": { t: "HASAN İN, A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ" },
+            "MEZİTLİ": { t: "HASAN İN, A. ÇAKICI PEKÇETİN", m: "TEVFİK YILDIZ" },
+            "TARSUS": { t: "BARIŞ YAYLAGÜL, MAHMUT MELEMEN", m: "TAHA GÜRKAN" },
+            "ÇAMLIYAYLA": { t: "BARIŞ YAYLAGÜL, MAHMUT MELEMEN", m: "TAHA GÜRKAN" },
+            "SİLİFKE": { t: "NEZİHE GÜLMEZ, MURAT SARI", m: "VOLKAN İZCİ" },
+            "AYDINCIK": { t: "NEZİHE GÜLMEZ, MURAT SARI", m: "VOLKAN İZCİ" },
+            "GÜLNAR": { t: "NEZİHE GÜLMEZ, MURAT SARI", m: "VOLKAN İZCİ" },
+            "BOZYAZI": { t: "HÜSEYİN BÜYÜK, SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN" },
+            "ANAMUR": { t: "HÜSEYİN BÜYÜK, SÜLEYMAN YILMAZ", m: "HİKMET GÜLCAN" },
+            "MUT": { t: "ÖMER ÇEVİK", m: "HİLMİ MÜFTÜOĞLU" },
+            "ERDEMLİ": { t: "SERDAR ARSLAN", m: "ÖZKAN AKBAŞ" }
+        };
 
-        // IKA state
+        let repoFilesCache = []; 
         let ikaData = { '1': [], '2': [], '3': [] };
         let ikaDisplayList = { '1': [], '2': [], '3': [] };
         let ikaFileSha = { '1': "", '2': "", '3': "" };
@@ -419,9 +432,8 @@
         }
 
         window.initializeApp = async function() {
-            window.toggleLoader(true, "Sistem ve Personel Verileri Yükleniyor...");
+            window.toggleLoader(true, "Sistem Verileri Yükleniyor...");
             await window.fetchRepoCache();
-            await window.fetchPersonnelData();
             window.toggleLoader(false);
             window.fetchIkaData(); 
         }
@@ -457,52 +469,6 @@
                 console.error("Repo cache hatası:", e); 
                 window.showToast(e.message || "GitHub'a bağlanılamadı.", "error", 6000);
                 return false;
-            }
-        }
-
-        window.getFileInfo = function(name, ext) {
-            const d1 = name.toLowerCase() + ext;
-            const d2 = window.safeFileName(name).toLowerCase() + ext;
-            return repoFilesCache.find(f => f.name.toLowerCase() === d1 || f.name.toLowerCase() === d2);
-        }
-
-        window.fetchPersonnelData = async function() {
-            try {
-                const fileObj = window.getFileInfo('personel_listesi', '.xlsx');
-                if (!fileObj) return;
-
-                const response = await fetch(fileObj.download_url);
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                    const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-
-                    personnelIdMap = {};
-                    personnelMahalleMap = {};
-
-                    data.forEach(row => {
-                        const ilce = String(row["İlçe"] || "").trim().toUpperCase();
-                        const mahalle = String(row["Mahalle"] || "").trim().toUpperCase();
-                        const tekniker = String(row["Tekniker"] || "").trim();
-                        const muhendis = String(row["Sorumlu Mühendis"] || "").trim();
-                        const idListesi = String(row["ID Listesi"] || "").trim();
-
-                        if (ilce && mahalle) {
-                            personnelMahalleMap[`${ilce}_${mahalle}`] = { t: tekniker, m: muhendis };
-                        }
-
-                        if (idListesi) {
-                            const ids = idListesi.split(',').map(id => window.normalizeId(id));
-                            ids.forEach(id => {
-                                if (id) {
-                                    personnelIdMap[id] = { t: tekniker, m: muhendis };
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error("Personel verisi çekilirken hata:", err);
             }
         }
 
@@ -560,12 +526,11 @@
                             let parsedData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 1, defval: "" });
                             
                             ikaData[p] = parsedData.map(row => {
-                                const pId = window.normalizeId(row["ID"]);
-                                const pKey = `${String(row["İlçe"] || "").toUpperCase().trim()}_${String(row["Mahalle"] || "").toUpperCase().trim()}`;
+                                const ilce = String(row["İlçe"] || "").toUpperCase().trim();
                                 
                                 let pInfo = { t: "-", m: "-" };
                                 if (p !== '1') { 
-                                     pInfo = personnelIdMap[pId] || personnelMahalleMap[pKey] || { t: "Bilinmiyor", m: "Bilinmiyor" };
+                                     pInfo = hardcodedPersonnel[ilce] || { t: "Bilinmiyor", m: "Bilinmiyor" };
                                 }
                                 row["Tekniker"] = pInfo.t;
                                 row["Sorumlu Mühendis"] = pInfo.m;
@@ -736,14 +701,14 @@
                     if (hasArazi) {
                         rowHtml += `
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçü Gerekiyor mu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçü Gerekiyor mu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${araziOlcuGerekliMi===''?'selected':''}>-</option>
                                 <option value="Evet" ${araziOlcuGerekliMi==='Evet'?'selected':''}>Evet</option>
                                 <option value="Hayır" ${araziOlcuGerekliMi==='Hayır'?'selected':''}>Hayır</option>
                             </select>
                         </td>
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçüsü Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Arazi Ölçüsü Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${araziOlcuDurumu===''?'selected':''}>-</option>
                                 <option value="YAPILDI" ${araziOlcuDurumu==='YAPILDI'?'selected':''}>YAPILDI</option>
                                 <option value="YAPILMADI" ${araziOlcuDurumu==='YAPILMADI'?'selected':''}>YAPILMADI</option>
@@ -754,7 +719,7 @@
                     if (hasDava) {
                         rowHtml += `
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Dava Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Dava Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${davaDurumu===''?'selected':''}>-</option>
                                 <option value="Muhakemat Geldi" ${davaDurumu==='Muhakemat Geldi'?'selected':''}>Muhakemat Geldi</option>
                                 <option value="Tutanak Tutuldu" ${davaDurumu==='Tutanak Tutuldu'?'selected':''}>Tutanak Tutuldu</option>
@@ -765,52 +730,52 @@
 
                     rowHtml += `
                         <td class="p-2 md:p-3">
-                            <input type="text" value="${aciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, '${aciklamaKey}', this.value)" placeholder="Açıklama giriniz..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
+                            <input type="text" value="${aciklama}" onchange="window.updateIkaRow('${p}', ${globalIndex}, '${aciklamaKey}', this.value)" placeholder="Açıklama giriniz..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
                         </td>`;
                         
                     if (hasBakanlik) {
                         rowHtml += `
                         <td class="p-2 md:p-3">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-indigo-600 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Durumu', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-indigo-600 cursor-pointer">
                                 <option value="" ${bakanlikDurumu===''?'selected':''}>-</option>
                                 <option value="Gönderildi" ${bakanlikDurumu==='Gönderildi'?'selected':''}>Gönderildi</option>
                                 <option value="Geldi" ${bakanlikDurumu==='Geldi'?'selected':''}>Geldi</option>
                                 <option value="İptal" ${bakanlikDurumu==='İptal'?'selected':''}>İptal</option>
                             </select>
-                            <input id="bakanlikAciklama_${p}_${globalIndex}" type="text" value="${bakanlikAciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Açıklaması', this.value)" placeholder="İptal sebebi..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${bakanlikDurumu === 'İptal' ? '' : 'hidden'}">
+                            <input id="bakanlikAciklama_${p}_${globalIndex}" type="text" value="${bakanlikAciklama}" onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Bakanlık Açıklaması', this.value)" placeholder="İptal sebebi..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${bakanlikDurumu === 'İptal' ? '' : 'hidden'}">
                         </td>`;
                     }
 
                     if (hasKurum) {
                         rowHtml += `
                         <td class="p-2 md:p-3">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${kurumGorusu===''?'selected':''}>-</option>
                                 <option value="Soruldu" ${kurumGorusu==='Soruldu'?'selected':''}>Soruldu</option>
                                 <option value="Tamamlandı" ${kurumGorusu==='Tamamlandı'?'selected':''}>Tamamlandı</option>
                                 <option value="Eksik" ${kurumGorusu==='Eksik'?'selected':''}>Eksik</option>
                             </select>
-                            <input id="kurumAciklama_${p}_${globalIndex}" type="text" value="${kurumAciklama}" onchange="updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü Açıklama', this.value)" placeholder="Eksik detayı..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${kurumGorusu === 'Eksik' ? '' : 'hidden'}">
+                            <input id="kurumAciklama_${p}_${globalIndex}" type="text" value="${kurumAciklama}" onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Kurum Görüşü Açıklama', this.value)" placeholder="Eksik detayı..." class="ika-input mt-1 w-full px-2 py-1 rounded-lg text-[10px] font-medium text-slate-600 border-red-300 focus:border-red-500 ${kurumGorusu === 'Eksik' ? '' : 'hidden'}">
                         </td>`;
                     }
 
                     rowHtml += `
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Firmaya Teslim Edildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Firmaya Teslim Edildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${firmayaTeslim===''?'selected':''}>-</option>
                                 <option value="Evet" ${firmayaTeslim==='Evet'?'selected':''}>Evet</option>
                                 <option value="Hayır" ${firmayaTeslim==='Hayır'?'selected':''}>Hayır</option>
                             </select>
                         </td>
                         <td class="p-2 md:p-3 text-center">
-                            <select onchange="updateIkaRow('${p}', ${globalIndex}, 'Tescile Gönderildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
+                            <select onchange="window.updateIkaRow('${p}', ${globalIndex}, 'Tescile Gönderildi', this.value)" class="ika-input w-full bg-slate-50 px-2 py-1.5 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer">
                                 <option value="" ${tescileGonderildi===''?'selected':''}>-</option>
                                 <option value="Evet" ${tescileGonderildi==='Evet'?'selected':''}>Evet</option>
                                 <option value="Hayır" ${tescileGonderildi==='Hayır'?'selected':''}>Hayır</option>
                             </select>
                         </td>
                         <td class="p-2 md:p-3">
-                            <input type="text" value="${iliskiliParsel}" onchange="updateIkaRow('${p}', ${globalIndex}, 'İlişkili Parsel', this.value)" placeholder="Parsel..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
+                            <input type="text" value="${iliskiliParsel}" onchange="window.updateIkaRow('${p}', ${globalIndex}, 'İlişkili Parsel', this.value)" placeholder="Parsel..." class="ika-input w-full px-2 py-1.5 rounded-lg text-xs font-medium text-slate-600">
                         </td>
                     </tr>
                     `;
@@ -1189,7 +1154,7 @@
                 }).join('');
 
                 return `
-                    <tr class="${rowClass} cursor-pointer" onclick="handleDistrictRowClick('${dist}')">
+                    <tr class="${rowClass} cursor-pointer" onclick="window.handleDistrictRowClick('${dist}')">
                         <td class="p-3 font-bold text-slate-700 flex items-center gap-2">
                             <i id="icon-${dist}" class="fas fa-chevron-right text-[10px] text-slate-400 transition-transform ${isActive ? 'rotate-90' : ''}"></i>
                             ${dist}
