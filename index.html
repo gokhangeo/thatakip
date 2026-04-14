@@ -746,7 +746,6 @@
                 window.populateIkaDropdowns();
                 window.updateIkaSaveButton();
                 
-                // İlk açılışta kartların seçili görünümünü sıfırla ve sadece filtreyi uygula, tablolar kapalı kalsın.
                 ['ALL', '1', '2', '3', 'PROCESSED'].forEach(id => {
                     const el = document.getElementById('card-' + id);
                     if (el) {
@@ -1381,7 +1380,8 @@
             window.toggleLoader(true, "Dosyalar Yükleniyor...");
             
             try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/ek_dosyalar/${district}?ref=${GITHUB_BRANCH}`, { 
+                // Cache busting ekleyerek Github'dan güncel listeyi alıyoruz
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/ek_dosyalar/${district}?ref=${GITHUB_BRANCH}&t=${new Date().getTime()}`, { 
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` } 
                 });
                 
@@ -1419,7 +1419,8 @@
             const safeFolder = personnel.replace(/[\s\.]+/g, '_');
 
             try {
-                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/personel_dosyalar/${safeFolder}?ref=${GITHUB_BRANCH}`, { 
+                // Cache busting
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/personel_dosyalar/${safeFolder}?ref=${GITHUB_BRANCH}&t=${new Date().getTime()}`, { 
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` } 
                 });
                 
@@ -1453,7 +1454,7 @@
             let html = '<ul class="divide-y divide-slate-100">';
             files.forEach(f => {
                 html += `
-                    <li class="p-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                    <li data-path="${f.path}" class="p-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
                         <div class="flex items-center gap-3 truncate pr-4">
                             <i class="fas fa-file-alt text-${type === 'district' ? 'indigo' : 'emerald'}-400 text-sm"></i>
                             <span class="text-[10px] font-semibold text-slate-700 truncate" title="${f.name}">${f.name}</span>
@@ -1570,7 +1571,7 @@
 
                 if(response.ok) {
                     window.showToast("Dosya başarıyla yüklendi!");
-                    window.checkUnreadFiles(); // Yüklenen dosya bildirim olarak da düşsün istersen
+                    window.checkUnreadFiles(); 
                     if (type === 'district') window.loadDistrictFiles(parentValue);
                     else window.loadPersonnelFiles(parentValue);
                 } else {
@@ -1616,12 +1617,23 @@
 
                 if(response.ok) {
                     window.showToast("Dosya başarıyla silindi!");
-                    window.checkUnreadFiles(); // Silindiğinde bildirim güncellensin
-                    if (pendingDeleteFile.type === 'district') {
-                        window.loadDistrictFiles(pendingDeleteFile.parentValue);
-                    } else {
-                        window.loadPersonnelFiles(pendingDeleteFile.parentValue);
+                    window.checkUnreadFiles(); 
+                    
+                    // GITHUB Cache'ini beklemeden anında arayüzden (DOM üzerinden) ilgili dosyayı silme işlemi
+                    let containerId = pendingDeleteFile.type === 'district' ? 'fileListContainer' : 'personnelFileListContainer';
+                    const container = document.getElementById(containerId);
+                    
+                    // DOM üzerinde path verisine sahip 'li' elemanını bul ve yok et
+                    const fileItem = container.querySelector(`li[data-path="${pendingDeleteFile.path}"]`);
+                    if (fileItem) {
+                        fileItem.remove();
                     }
+                    
+                    // Eğer silindikten sonra listede hiç eleman kalmadıysa "Henüz dosya yüklenmemiş" mesajını göster
+                    if (container.querySelectorAll('li').length === 0) {
+                        container.innerHTML = '<p class="text-xs text-slate-400 italic flex justify-center items-center h-full">Henüz dosya yüklenmemiş.</p>';
+                    }
+
                 } else {
                     throw new Error("Silme işlemi başarısız.");
                 }
