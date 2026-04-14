@@ -29,6 +29,12 @@
         .blink-warning { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
+        .blink-bg { animation: blink-bg-anim 1.5s infinite; }
+        @keyframes blink-bg-anim {
+            0%, 100% { background-color: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+            50% { background-color: #ef4444; color: #ffffff; border-color: #ef4444; }
+        }
+
         /* Giriş Ekranı */
         #loginScreen { transition: opacity 0.5s ease; }
         .subtable-row { transition: all 0.3s ease; }
@@ -160,10 +166,11 @@
                 
                 <!-- İlçe Bazlı Dosya Yönetimi -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden w-full h-full flex flex-col">
-                    <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100">
+                    <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                         <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                             <i class="fas fa-folder-open text-blue-500 text-sm"></i> İlçe Bazlı Dosya Yönetimi
                         </div>
+                        <div id="districtWarningContainer" class="flex gap-1 flex-wrap"></div>
                     </div>
                     <div class="p-4 flex flex-col gap-4 flex-grow">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,10 +224,11 @@
 
                 <!-- Personel Bazlı Dosya Yönetimi -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden w-full h-full flex flex-col">
-                    <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100">
+                    <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                         <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                             <i class="fas fa-user-tie text-emerald-500 text-sm"></i> Personel Bazlı Dosya Yönetimi
                         </div>
+                        <div id="personnelWarningContainer" class="flex gap-1 flex-wrap"></div>
                     </div>
                     <div class="p-4 flex flex-col gap-4 flex-grow">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -344,7 +352,7 @@
                             <i id="ikaToggleIcon1" class="fas fa-chevron-down text-indigo-400 transition-transform rotate-180"></i>
                         </div>
                     </button>
-                    <div id="ikaTableWrapper1" class="table-container overflow-auto custom-scrollbar transition-all duration-300">
+                    <div id="ikaTableWrapper1" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
                         <table class="w-full text-left border-collapse min-w-[1100px]">
                             <thead class="bg-indigo-50/50 sticky top-0 z-10 border-b border-indigo-100">
                                 <tr>
@@ -380,7 +388,7 @@
                             <i id="ikaToggleIcon2" class="fas fa-chevron-down text-amber-400 transition-transform rotate-180"></i>
                         </div>
                     </button>
-                    <div id="ikaTableWrapper2" class="table-container overflow-auto custom-scrollbar transition-all duration-300">
+                    <div id="ikaTableWrapper2" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
                         <table class="w-full text-left border-collapse min-w-[1150px]">
                             <thead class="bg-amber-50/50 sticky top-0 z-10 border-b border-amber-100">
                                 <tr>
@@ -416,7 +424,7 @@
                             <i id="ikaToggleIcon3" class="fas fa-chevron-down text-red-400 transition-transform rotate-180"></i>
                         </div>
                     </button>
-                    <div id="ikaTableWrapper3" class="table-container overflow-auto custom-scrollbar transition-all duration-300">
+                    <div id="ikaTableWrapper3" class="table-container overflow-auto custom-scrollbar hidden transition-all duration-300">
                         <table class="w-full text-left border-collapse min-w-[1250px]">
                             <thead class="bg-red-50/50 sticky top-0 z-10 border-b border-red-100">
                                 <tr>
@@ -472,13 +480,14 @@
         const GITHUB_BRANCH = "main";
 
         let repoFilesCache = []; 
+        let globalTreeFiles = [];
         let ikaData = { '1': [], '2': [], '3': [] };
         let ikaDisplayList = { '1': [], '2': [], '3': [] };
         let thaFileSha = ""; 
         let isIkaModified = { '1': false, '2': false, '3': false };
         let ikaSearchTimer;
         let pendingDeleteFile = null;
-        let showOnlyProcessed = false; // "İşlem Yapılan" filtresi için global değişken
+        let showOnlyProcessed = false; 
 
         window.onload = () => {
             if (localStorage.getItem('tha_logged_in') === 'true') {
@@ -513,6 +522,7 @@
         window.initializeApp = async function() {
             window.toggleLoader(true, "Sistem Verileri Yükleniyor...");
             await window.fetchRepoCache();
+            await window.checkUnreadFiles();
             window.toggleLoader(false);
             window.fetchIkaData(); 
             document.getElementById('summaryPanel').classList.remove('hidden');
@@ -549,6 +559,78 @@
                 console.error("Repo cache hatası:", e); 
                 window.showToast(e.message || "GitHub'a bağlanılamadı.", "error", 6000);
                 return false;
+            }
+        }
+
+        window.checkUnreadFiles = async function() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`, { 
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}` } 
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    globalTreeFiles = data.tree.filter(f => f.type === 'blob');
+                    window.renderWarnings();
+                }
+            } catch(e) {
+                console.error("Tree fetch error:", e);
+            }
+        }
+
+        window.renderWarnings = function() {
+            const viewedFiles = JSON.parse(localStorage.getItem('tha_viewed_files') || '[]');
+            
+            const unreadDistricts = new Set();
+            const unreadPersonnel = new Set();
+            
+            const pOptions = Array.from(document.getElementById('filePersonnelSelect').options).map(o => o.value).filter(v => v);
+            const pMap = {};
+            pOptions.forEach(p => pMap[p.replace(/[\s\.]+/g, '_')] = p);
+
+            globalTreeFiles.forEach(f => {
+                if (!viewedFiles.includes(f.sha)) {
+                    if (f.path.startsWith('ek_dosyalar/')) {
+                        const parts = f.path.split('/');
+                        if (parts.length > 2) {
+                            unreadDistricts.add(parts[1]);
+                        }
+                    } else if (f.path.startsWith('personel_dosyalar/')) {
+                        const parts = f.path.split('/');
+                        if (parts.length > 2) {
+                            const safeFolder = parts[1];
+                            if (pMap[safeFolder]) {
+                                unreadPersonnel.add(pMap[safeFolder]);
+                            }
+                        }
+                    }
+                }
+            });
+
+            const dContainer = document.getElementById('districtWarningContainer');
+            dContainer.innerHTML = '';
+            unreadDistricts.forEach(dist => {
+                dContainer.innerHTML += `<span onclick="document.getElementById('fileDistrictSelect').value='${dist}'; loadDistrictFiles('${dist}');" class="blink-bg px-2 py-1 rounded text-[9px] font-bold cursor-pointer shadow-sm border border-red-200"><i class="fas fa-bell mr-1"></i>${dist} YENİ DOSYA</span>`;
+            });
+
+            const pContainer = document.getElementById('personnelWarningContainer');
+            pContainer.innerHTML = '';
+            unreadPersonnel.forEach(pers => {
+                pContainer.innerHTML += `<span onclick="document.getElementById('filePersonnelSelect').value='${pers}'; loadPersonnelFiles('${pers}');" class="blink-bg px-2 py-1 rounded text-[9px] font-bold cursor-pointer shadow-sm border border-red-200"><i class="fas fa-bell mr-1"></i>${pers} YENİ DOSYA</span>`;
+            });
+        }
+
+        window.markFilesAsRead = function(files) {
+            let viewedFiles = JSON.parse(localStorage.getItem('tha_viewed_files') || '[]');
+            let changed = false;
+            files.forEach(f => {
+                if (!viewedFiles.includes(f.sha)) {
+                    viewedFiles.push(f.sha);
+                    changed = true;
+                }
+            });
+            if (changed) {
+                localStorage.setItem('tha_viewed_files', JSON.stringify(viewedFiles));
+                window.renderWarnings();
             }
         }
 
@@ -663,7 +745,18 @@
                 
                 window.populateIkaDropdowns();
                 window.updateIkaSaveButton();
-                window.filterByCard('ALL'); 
+                
+                // İlk açılışta kartların seçili görünümünü sıfırla ve sadece filtreyi uygula, tablolar kapalı kalsın.
+                ['ALL', '1', '2', '3', 'PROCESSED'].forEach(id => {
+                    const el = document.getElementById('card-' + id);
+                    if (el) {
+                        el.classList.remove('bg-slate-100', 'ring-2', 'ring-slate-200');
+                        el.classList.add('bg-white');
+                    }
+                });
+                showOnlyProcessed = false;
+                window.filterIkaData(); 
+
                 window.updateIkaStats();
             } catch (err) {
                 console.error("İKA Verisi Çekme Hatası: ", err);
@@ -1295,6 +1388,7 @@
                 if (res.ok) {
                     const files = await res.json();
                     renderFileList(files, district, 'district');
+                    markFilesAsRead(files);
                 } else if (res.status === 404) {
                     renderFileList([], district, 'district'); 
                 } else {
@@ -1332,6 +1426,7 @@
                 if (res.ok) {
                     const files = await res.json();
                     renderFileList(files, personnel, 'personnel');
+                    markFilesAsRead(files);
                 } else if (res.status === 404) {
                     renderFileList([], personnel, 'personnel'); 
                 } else {
@@ -1475,6 +1570,7 @@
 
                 if(response.ok) {
                     window.showToast("Dosya başarıyla yüklendi!");
+                    window.checkUnreadFiles(); // Yüklenen dosya bildirim olarak da düşsün istersen
                     if (type === 'district') window.loadDistrictFiles(parentValue);
                     else window.loadPersonnelFiles(parentValue);
                 } else {
@@ -1520,6 +1616,7 @@
 
                 if(response.ok) {
                     window.showToast("Dosya başarıyla silindi!");
+                    window.checkUnreadFiles(); // Silindiğinde bildirim güncellensin
                     if (pendingDeleteFile.type === 'district') {
                         window.loadDistrictFiles(pendingDeleteFile.parentValue);
                     } else {
