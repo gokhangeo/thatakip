@@ -188,22 +188,45 @@
 
         </div>
 
-        <!-- Bugün Sisteme Yüklenen Tüm Dosyalar Bölümü -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-6 flex flex-col">
-            <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
-                <i class="fas fa-calendar-check text-indigo-500 text-lg"></i>
-                <div>
-                    <h3 class="text-slate-700 font-bold text-sm uppercase tracking-wide leading-tight">Bugün Yüklenen Tüm Dosyalar</h3>
-                    <p class="text-[10px] text-slate-400 font-medium">Sistemdeki tüm güncel hareketler</p>
+        <!-- Alt Bölüm: Bugün ve Dün Yüklenenler -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 flex-shrink-0">
+            
+            <!-- Bugün Yüklenenler -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
+                    <i class="fas fa-calendar-day text-indigo-500 text-lg"></i>
+                    <div>
+                        <h3 class="text-slate-700 font-bold text-sm uppercase tracking-wide leading-tight">Bugün Yüklenenler</h3>
+                        <p class="text-[10px] text-slate-400 font-medium">Sistemdeki bugünkü hareketler</p>
+                    </div>
+                </div>
+                <div class="relative overflow-hidden flex-grow">
+                    <div class="absolute inset-0 overflow-y-auto custom-scrollbar">
+                        <ul id="globalTodayList" class="divide-y divide-slate-100">
+                            <li class="p-6 text-center text-xs text-slate-400 italic">Veriler yükleniyor...</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-            <div class="relative overflow-hidden flex-grow min-h-[200px] max-h-[400px]">
-                <div class="absolute inset-0 overflow-y-auto custom-scrollbar">
-                    <ul id="globalTodayList" class="divide-y divide-slate-100">
-                        <li class="p-6 text-center text-xs text-slate-400 italic">Veriler yükleniyor...</li>
-                    </ul>
+
+            <!-- Dün Yüklenenler -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
+                <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
+                    <i class="fas fa-history text-slate-400 text-lg"></i>
+                    <div>
+                        <h3 class="text-slate-700 font-bold text-sm uppercase tracking-wide leading-tight">Dün Yüklenenler</h3>
+                        <p class="text-[10px] text-slate-400 font-medium">Sistemdeki dünkü hareketler</p>
+                    </div>
+                </div>
+                <div class="relative overflow-hidden flex-grow">
+                    <div class="absolute inset-0 overflow-y-auto custom-scrollbar">
+                        <ul id="globalYesterdayList" class="divide-y divide-slate-100">
+                            <li class="p-6 text-center text-xs text-slate-400 italic">Veriler yükleniyor...</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
+
         </div>
 
     </main>
@@ -288,7 +311,7 @@
             await window.loadMetadata(); 
             await window.checkUnreadFiles();
             await window.syncMissingDates(); // Tüm eksik tarihleri başlangıçta günceller
-            window.renderGlobalTodayFiles();
+            window.renderGlobalRecentFiles();
             window.toggleLoader(false);
         }
 
@@ -563,11 +586,19 @@
             return new Date();
         }
 
-        // --- GLOBAL BUGÜN YÜKLENENLER TABLOSU ---
-        window.renderGlobalTodayFiles = function() {
-            const container = document.getElementById('globalTodayList');
-            const todayStr = new Date().toLocaleDateString('tr-TR');
+        // --- GLOBAL BUGÜN VE DÜN YÜKLENENLER TABLOLARI ---
+        window.renderGlobalRecentFiles = function() {
+            const todayContainer = document.getElementById('globalTodayList');
+            const yesterdayContainer = document.getElementById('globalYesterdayList');
+            
+            const now = new Date();
+            const todayStr = now.toLocaleDateString('tr-TR');
+            const yesterdayDate = new Date(now);
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+            const yesterdayStr = yesterdayDate.toLocaleDateString('tr-TR');
+            
             let todayFiles = [];
+            let yesterdayFiles = [];
 
             // Ters haritalama (Personel klasör isminden, görünen isme dönüştürmek için)
             const pMapReverse = {};
@@ -583,7 +614,9 @@
                 const dateObj = new Date(metadataCache[path]);
                 if (isNaN(dateObj.getTime())) return;
 
-                if (dateObj.toLocaleDateString('tr-TR') === todayStr) {
+                const dateStr = dateObj.toLocaleDateString('tr-TR');
+
+                if (dateStr === todayStr || dateStr === yesterdayStr) {
                     let type = '';
                     let parentValue = '';
                     let displayName = '';
@@ -601,56 +634,60 @@
                     }
 
                     if (type) {
-                        todayFiles.push({
+                        const fileData = {
                             path: path,
                             name: displayName,
                             sha: f.sha,
                             dateObj: dateObj,
                             type: type,
                             parentValue: parentValue
-                        });
+                        };
+                        if (dateStr === todayStr) todayFiles.push(fileData);
+                        else yesterdayFiles.push(fileData);
                     }
                 }
             });
 
             // Saate göre sondan başa sırala (En yeni en üstte)
             todayFiles.sort((a, b) => b.dateObj - a.dateObj);
+            yesterdayFiles.sort((a, b) => b.dateObj - a.dateObj);
 
-            if (todayFiles.length === 0) {
-                container.innerHTML = '<li class="p-6 text-center text-xs text-slate-400 italic">Bugün sisteme henüz bir dosya yüklenmedi.</li>';
-                return;
-            }
+            const buildHtml = (files, emptyMsg) => {
+                if (files.length === 0) {
+                    return `<li class="p-6 text-center text-xs text-slate-400 italic">${emptyMsg}</li>`;
+                }
+                let html = '';
+                files.forEach(f => {
+                    const timeText = f.dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+                    const badgeClass = f.type === 'district' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                    const iconClass = f.type === 'district' ? 'fa-building text-blue-500' : 'fa-user-tie text-emerald-500';
+                    const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
 
-            let html = '';
-            todayFiles.forEach(f => {
-                const dateText = `${f.dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
-                const badgeClass = f.type === 'district' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                const iconClass = f.type === 'district' ? 'fa-building text-blue-500' : 'fa-user-tie text-emerald-500';
-                
-                // Güvenli indirme linki oluştur
-                const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
+                    html += `
+                        <li class="p-3 flex flex-col md:flex-row md:justify-between md:items-center hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 gap-3">
+                            <div class="flex items-center gap-3 flex-grow truncate">
+                                <span class="text-[10px] font-bold text-slate-500 w-12 text-center flex-shrink-0"><i class="far fa-clock mr-1"></i>${timeText}</span>
+                                <span class="px-2 py-1 rounded text-[9px] font-bold uppercase border ${badgeClass} w-28 text-center flex-shrink-0 truncate" title="${f.parentValue}">
+                                    <i class="fas ${iconClass} mr-1"></i>${f.parentValue}
+                                </span>
+                                <span class="text-xs font-semibold text-slate-700 truncate" title="${f.name}">${f.name}</span>
+                            </div>
+                            <div class="flex gap-2 flex-shrink-0 ml-14 md:ml-0">
+                                <button onclick="requestDeleteFile('${f.path}', '${f.sha}', '${f.parentValue}', '${f.type}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                                    <i class="fas fa-trash-alt mr-1"></i> Sil
+                                </button>
+                                <a href="${downloadUrl}" target="_blank" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all shadow-sm">
+                                    <i class="fas fa-download mr-1"></i> İndir
+                                </a>
+                            </div>
+                        </li>
+                    `;
+                });
+                return html;
+            };
 
-                html += `
-                    <li class="p-3 flex flex-col md:flex-row md:justify-between md:items-center hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 gap-3">
-                        <div class="flex items-center gap-3 flex-grow truncate">
-                            <span class="text-[10px] font-bold text-slate-500 w-12 text-center flex-shrink-0"><i class="far fa-clock mr-1"></i>${dateText}</span>
-                            <span class="px-2 py-1 rounded text-[9px] font-bold uppercase border ${badgeClass} w-28 text-center flex-shrink-0 truncate" title="${f.parentValue}">
-                                <i class="fas ${iconClass} mr-1"></i>${f.parentValue}
-                            </span>
-                            <span class="text-xs font-semibold text-slate-700 truncate" title="${f.name}">${f.name}</span>
-                        </div>
-                        <div class="flex gap-2 flex-shrink-0 ml-14 md:ml-0">
-                            <button onclick="requestDeleteFile('${f.path}', '${f.sha}', '${f.parentValue}', '${f.type}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                                <i class="fas fa-trash-alt mr-1"></i> Sil
-                            </button>
-                            <a href="${downloadUrl}" target="_blank" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all shadow-sm">
-                                <i class="fas fa-download mr-1"></i> İndir
-                            </a>
-                        </div>
-                    </li>
-                `;
-            });
-            container.innerHTML = html;
+            todayContainer.innerHTML = buildHtml(todayFiles, 'Bugün sisteme henüz bir dosya yüklenmedi.');
+            yesterdayContainer.innerHTML = buildHtml(yesterdayFiles, 'Dün sisteme herhangi bir dosya yüklenmedi.');
         }
 
         // --- İLÇE DOSYALARI ÇEKME VE METADATA EŞLEŞTİRME ---
@@ -689,7 +726,7 @@
 
                     renderFileList(files, district, 'district');
                     markFilesAsRead(files);
-                    window.renderGlobalTodayFiles(); // Alt listeyi de anında güncelle
+                    window.renderGlobalRecentFiles(); // Alt listeleri anında güncelle
                 } else if (res.status === 404) {
                     renderFileList([], district, 'district'); 
                 } else {
@@ -741,7 +778,7 @@
 
                     renderFileList(files, personnel, 'personnel');
                     markFilesAsRead(files);
-                    window.renderGlobalTodayFiles(); // Alt listeyi de anında güncelle
+                    window.renderGlobalRecentFiles(); // Alt listeleri anında güncelle
                 } else if (res.status === 404) {
                     renderFileList([], personnel, 'personnel'); 
                 } else {
@@ -935,7 +972,7 @@
 
                     window.showToast("Dosya başarıyla yüklendi!");
                     await window.checkUnreadFiles(); 
-                    window.renderGlobalTodayFiles(); // Global listeyi anında güncelle
+                    window.renderGlobalRecentFiles(); // Global listeyi anında güncelle
                     
                     if (type === 'district' && currentSelectedDistrict === parentValue) window.loadDistrictFiles(parentValue);
                     else if (type === 'personnel' && currentSelectedPersonnel === parentValue) window.loadPersonnelFiles(parentValue);
@@ -988,7 +1025,7 @@
 
                     window.showToast("Dosya başarıyla silindi!");
                     await window.checkUnreadFiles(); 
-                    window.renderGlobalTodayFiles(); // Global listeyi anında güncelle
+                    window.renderGlobalRecentFiles(); // Global listeyi anında güncelle
                     
                     if (pendingDeleteFile.type === 'district' && currentSelectedDistrict === pendingDeleteFile.parentValue) window.loadDistrictFiles(pendingDeleteFile.parentValue);
                     else if (pendingDeleteFile.type === 'personnel' && currentSelectedPersonnel === pendingDeleteFile.parentValue) window.loadPersonnelFiles(pendingDeleteFile.parentValue);
