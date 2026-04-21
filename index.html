@@ -88,25 +88,25 @@
 
     <main class="max-w-[1600px] mx-auto w-full p-3 md:p-4 flex-grow flex flex-col relative">
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-grow">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-shrink-0">
             
             <!-- İlçe Bazlı Dosya Yönetimi -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full min-h-[500px]">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-building text-blue-500 text-sm"></i> İlçe Bazlı Dosya Yönetimi
                     </div>
                     <div id="districtWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
-                <div class="p-4 flex flex-col md:flex-row gap-4 flex-grow">
+                <div class="p-4 flex flex-col md:flex-row gap-4 flex-grow overflow-hidden">
                     <!-- Sol: Etkileşimli İlçe Listesi -->
                     <div class="w-full md:w-1/3 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 max-h-[300px] md:max-h-none" id="interactiveDistrictList">
                         <!-- JS ile doldurulacak -->
                     </div>
                     
                     <!-- Sağ: Dosya Yükleme ve Liste Alanı -->
-                    <div class="w-full md:w-2/3 flex flex-col gap-3 flex-grow">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div class="w-full md:w-2/3 flex flex-col gap-3 flex-grow overflow-hidden">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-shrink-0">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Yeni Dosya Yükle</label>
                                 <span id="uploadTargetDistrictLabel" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">İlçe Seçin</span>
@@ -125,12 +125,12 @@
                             </div>
                         </div>
                         
-                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-grow flex flex-col min-h-[250px] relative">
-                            <div class="bg-slate-50 p-2 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase text-center flex justify-between items-center px-4">
+                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-grow flex flex-col relative">
+                            <div class="bg-slate-50 p-2 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase text-center flex justify-between items-center px-4 flex-shrink-0">
                                 <span>Mevcut Dosyalar</span>
                                 <span id="currentDistrictLabel" class="text-indigo-600">-</span>
                             </div>
-                            <div id="fileListContainer" class="flex-grow relative">
+                            <div id="fileListContainer" class="flex-grow relative overflow-hidden">
                                 <p class="text-xs text-slate-400 italic flex justify-center items-center h-full absolute inset-0">Lütfen dosya görüntülemek için soldan ilçe seçin.</p>
                             </div>
                         </div>
@@ -139,22 +139,22 @@
             </div>
 
             <!-- Personel Bazlı Dosya Yönetimi -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-full min-h-[500px]">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-user-tie text-emerald-500 text-sm"></i> Personel Bazlı Dosya Yönetimi
                     </div>
                     <div id="personnelWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
-                <div class="p-4 flex flex-col md:flex-row gap-4 flex-grow">
+                <div class="p-4 flex flex-col md:flex-row gap-4 flex-grow overflow-hidden">
                     <!-- Sol: Etkileşimli Personel Listesi -->
                     <div class="w-full md:w-1/3 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 max-h-[300px] md:max-h-none" id="interactivePersonnelList">
                         <!-- JS ile doldurulacak -->
                     </div>
                     
                     <!-- Sağ: Dosya Yükleme ve Liste Alanı -->
-                    <div class="w-full md:w-2/3 flex flex-col gap-3 flex-grow">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div class="w-full md:w-2/3 flex flex-col gap-3 flex-grow overflow-hidden">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-shrink-0">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Yeni Dosya Yükle</label>
                                 <span id="uploadTargetPersonnelLabel" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">Personel Seçin</span>
@@ -173,12 +173,12 @@
                             </div>
                         </div>
                         
-                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-grow flex flex-col min-h-[250px] relative">
-                            <div class="bg-slate-50 p-2 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase text-center flex justify-between items-center px-4">
+                        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden flex-grow flex flex-col relative">
+                            <div class="bg-slate-50 p-2 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase text-center flex justify-between items-center px-4 flex-shrink-0">
                                 <span>Mevcut Dosyalar</span>
                                 <span id="currentPersonnelLabel" class="text-emerald-600">-</span>
                             </div>
-                            <div id="personnelFileListContainer" class="flex-grow relative">
+                            <div id="personnelFileListContainer" class="flex-grow relative overflow-hidden">
                                 <p class="text-xs text-slate-400 italic flex justify-center items-center h-full absolute inset-0">Lütfen dosya görüntülemek için soldan personel seçin.</p>
                             </div>
                         </div>
@@ -187,6 +187,25 @@
             </div>
 
         </div>
+
+        <!-- Bugün Sisteme Yüklenen Tüm Dosyalar Bölümü -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mt-6 flex flex-col">
+            <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
+                <i class="fas fa-calendar-check text-indigo-500 text-lg"></i>
+                <div>
+                    <h3 class="text-slate-700 font-bold text-sm uppercase tracking-wide leading-tight">Bugün Yüklenen Tüm Dosyalar</h3>
+                    <p class="text-[10px] text-slate-400 font-medium">Sistemdeki tüm güncel hareketler</p>
+                </div>
+            </div>
+            <div class="relative overflow-hidden flex-grow min-h-[200px] max-h-[400px]">
+                <div class="absolute inset-0 overflow-y-auto custom-scrollbar">
+                    <ul id="globalTodayList" class="divide-y divide-slate-100">
+                        <li class="p-6 text-center text-xs text-slate-400 italic">Veriler yükleniyor...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Modal: Dosya Silme Onayı -->
@@ -266,8 +285,9 @@
             window.toggleLoader(true, "Sistem Verileri Yükleniyor...");
             window.renderInteractiveDistricts();
             window.renderInteractivePersonnel();
-            await window.loadMetadata(); // Metadataları çek
+            await window.loadMetadata(); 
             await window.checkUnreadFiles();
+            window.renderGlobalTodayFiles(); // Yeni bölümü yükle
             window.toggleLoader(false);
         }
 
@@ -275,7 +295,7 @@
             return str.replace(/İ/g, 'I').replace(/Ş/g, 'S').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ö/g, 'O').replace(/Ç/g, 'C').toUpperCase();
         }
 
-        // METADATA İŞLEMLERİ (Tarihleri JSON'da tutma)
+        // METADATA İŞLEMLERİ
         window.loadMetadata = async function() {
             try {
                 const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/metadata.json?ref=${GITHUB_BRANCH}`, {
@@ -409,7 +429,7 @@
                 const hasUnread = unreadDistrictsSet.has(dist);
                 const isSelected = currentSelectedDistrict === dist;
                 
-                const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold ";
+                const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
                 const activeClass = isSelected ? "bg-blue-50 border-blue-500 text-blue-700 shadow-sm" : "bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-slate-600";
                 
                 html += `
@@ -453,7 +473,7 @@
                 const hasUnread = unreadPersonnelSet.has(pers);
                 const isSelected = currentSelectedPersonnel === pers;
                 
-                const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold ";
+                const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
                 const activeClass = isSelected ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm" : "bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50 text-slate-600";
                 
                 html += `
@@ -519,6 +539,96 @@
                 }
             } catch(e) { console.error(e); }
             return new Date();
+        }
+
+        // --- GLOBAL BUGÜN YÜKLENENLER TABLOSU ---
+        window.renderGlobalTodayFiles = function() {
+            const container = document.getElementById('globalTodayList');
+            const todayStr = new Date().toLocaleDateString('tr-TR');
+            let todayFiles = [];
+
+            // Ters haritalama (Personel klasör isminden, görünen isme dönüştürmek için)
+            const pMapReverse = {};
+            persList.forEach(p => pMapReverse[p.replace(/[\s\.]+/g, '_')] = p);
+
+            globalTreeFiles.forEach(f => {
+                if (f.type !== 'blob') return;
+                const path = f.path;
+                
+                // Tarihi json verisinden kontrol et
+                if (!metadataCache[path]) return; 
+                
+                const dateObj = new Date(metadataCache[path]);
+                if (isNaN(dateObj.getTime())) return;
+
+                if (dateObj.toLocaleDateString('tr-TR') === todayStr) {
+                    let type = '';
+                    let parentValue = '';
+                    let displayName = '';
+                    const parts = path.split('/');
+                    
+                    if (path.startsWith('ek_dosyalar/') && parts.length > 2) {
+                        type = 'district';
+                        parentValue = parts[1];
+                        displayName = parts.slice(2).join('/');
+                    } else if (path.startsWith('personel_dosyalar/') && parts.length > 2) {
+                        type = 'personnel';
+                        const safeFolder = parts[1];
+                        parentValue = pMapReverse[safeFolder] || safeFolder;
+                        displayName = parts.slice(2).join('/');
+                    }
+
+                    if (type) {
+                        todayFiles.push({
+                            path: path,
+                            name: displayName,
+                            sha: f.sha,
+                            dateObj: dateObj,
+                            type: type,
+                            parentValue: parentValue
+                        });
+                    }
+                }
+            });
+
+            // Saate göre sondan başa sırala (En yeni en üstte)
+            todayFiles.sort((a, b) => b.dateObj - a.dateObj);
+
+            if (todayFiles.length === 0) {
+                container.innerHTML = '<li class="p-6 text-center text-xs text-slate-400 italic">Bugün sisteme henüz bir dosya yüklenmedi.</li>';
+                return;
+            }
+
+            let html = '';
+            todayFiles.forEach(f => {
+                const dateText = `${f.dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}`;
+                const badgeClass = f.type === 'district' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                const iconClass = f.type === 'district' ? 'fa-building text-blue-500' : 'fa-user-tie text-emerald-500';
+                
+                // Güvenli indirme linki oluştur
+                const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
+
+                html += `
+                    <li class="p-3 flex flex-col md:flex-row md:justify-between md:items-center hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 gap-3">
+                        <div class="flex items-center gap-3 flex-grow truncate">
+                            <span class="text-[10px] font-bold text-slate-500 w-12 text-center flex-shrink-0"><i class="far fa-clock mr-1"></i>${dateText}</span>
+                            <span class="px-2 py-1 rounded text-[9px] font-bold uppercase border ${badgeClass} w-28 text-center flex-shrink-0 truncate" title="${f.parentValue}">
+                                <i class="fas ${iconClass} mr-1"></i>${f.parentValue}
+                            </span>
+                            <span class="text-xs font-semibold text-slate-700 truncate" title="${f.name}">${f.name}</span>
+                        </div>
+                        <div class="flex gap-2 flex-shrink-0 ml-14 md:ml-0">
+                            <button onclick="requestDeleteFile('${f.path}', '${f.sha}', '${f.parentValue}', '${f.type}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                                <i class="fas fa-trash-alt mr-1"></i> Sil
+                            </button>
+                            <a href="${downloadUrl}" target="_blank" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all shadow-sm">
+                                <i class="fas fa-download mr-1"></i> İndir
+                            </a>
+                        </div>
+                    </li>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         // --- İLÇE DOSYALARI ÇEKME VE METADATA EŞLEŞTİRME ---
@@ -785,15 +895,15 @@
                 });
 
                 if(response.ok) {
-                    // Tarihi anında metadata.json'a kaydet
                     metadataCache[`${folderPath}/${safeName}`] = new Date().toISOString();
                     await saveMetadata();
 
                     window.showToast("Dosya başarıyla yüklendi!");
-                    window.checkUnreadFiles(); 
+                    await window.checkUnreadFiles(); 
+                    window.renderGlobalTodayFiles(); // Global listeyi güncelle
                     
-                    if (type === 'district') window.loadDistrictFiles(parentValue);
-                    else window.loadPersonnelFiles(parentValue);
+                    if (type === 'district' && currentSelectedDistrict === parentValue) window.loadDistrictFiles(parentValue);
+                    else if (type === 'personnel' && currentSelectedPersonnel === parentValue) window.loadPersonnelFiles(parentValue);
                 } else {
                     throw new Error("Yükleme başarısız.");
                 }
@@ -836,15 +946,15 @@
                 });
 
                 if(response.ok) {
-                    // Metadatadan da sil ve kaydet
                     delete metadataCache[pendingDeleteFile.path];
                     await saveMetadata();
 
                     window.showToast("Dosya başarıyla silindi!");
-                    window.checkUnreadFiles(); 
+                    await window.checkUnreadFiles(); 
+                    window.renderGlobalTodayFiles(); // Global listeyi güncelle
                     
-                    if (pendingDeleteFile.type === 'district') window.loadDistrictFiles(pendingDeleteFile.parentValue);
-                    else window.loadPersonnelFiles(pendingDeleteFile.parentValue);
+                    if (pendingDeleteFile.type === 'district' && currentSelectedDistrict === pendingDeleteFile.parentValue) window.loadDistrictFiles(pendingDeleteFile.parentValue);
+                    else if (pendingDeleteFile.type === 'personnel' && currentSelectedPersonnel === pendingDeleteFile.parentValue) window.loadPersonnelFiles(pendingDeleteFile.parentValue);
 
                 } else {
                     throw new Error("Silme işlemi başarısız.");
