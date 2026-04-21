@@ -287,7 +287,8 @@
             window.renderInteractivePersonnel();
             await window.loadMetadata(); 
             await window.checkUnreadFiles();
-            window.renderGlobalTodayFiles(); // Yeni bölümü yükle
+            await window.syncMissingDates(); // Tüm eksik tarihleri başlangıçta günceller
+            window.renderGlobalTodayFiles();
             window.toggleLoader(false);
         }
 
@@ -352,6 +353,27 @@
                 }
             } catch(e) {
                 console.error("Ağaç yapısı alınamadı:", e);
+            }
+        }
+
+        // EKSİK TARİHLERİ BAŞLANGIÇTA OTOMATİK SENKRONİZE EDER
+        window.syncMissingDates = async function() {
+            const missingFiles = globalTreeFiles.filter(f => 
+                (f.path.startsWith('ek_dosyalar/') || f.path.startsWith('personel_dosyalar/')) &&
+                !metadataCache[f.path]
+            );
+
+            if (missingFiles.length > 0) {
+                window.toggleLoader(true, "Yeni dosyaların tarihleri eşitleniyor...");
+                let needsSave = false;
+                for (let f of missingFiles) {
+                    const d = await getFileDate(f.path);
+                    metadataCache[f.path] = d.toISOString();
+                    needsSave = true;
+                }
+                if (needsSave) {
+                    await saveMetadata();
+                }
             }
         }
 
@@ -667,6 +689,7 @@
 
                     renderFileList(files, district, 'district');
                     markFilesAsRead(files);
+                    window.renderGlobalTodayFiles(); // Alt listeyi de anında güncelle
                 } else if (res.status === 404) {
                     renderFileList([], district, 'district'); 
                 } else {
@@ -718,6 +741,7 @@
 
                     renderFileList(files, personnel, 'personnel');
                     markFilesAsRead(files);
+                    window.renderGlobalTodayFiles(); // Alt listeyi de anında güncelle
                 } else if (res.status === 404) {
                     renderFileList([], personnel, 'personnel'); 
                 } else {
@@ -895,12 +919,23 @@
                 });
 
                 if(response.ok) {
-                    metadataCache[`${folderPath}/${safeName}`] = new Date().toISOString();
+                    const data = await response.json();
+                    
+                    // GitHub önbelleğini beklemeden listeye anında ekle
+                    const filePath = `${folderPath}/${safeName}`;
+                    const existingIdx = globalTreeFiles.findIndex(f => f.path === filePath);
+                    if (existingIdx > -1) {
+                        globalTreeFiles[existingIdx].sha = data.content.sha;
+                    } else {
+                        globalTreeFiles.push({ path: filePath, sha: data.content.sha, type: 'blob' });
+                    }
+
+                    metadataCache[filePath] = new Date().toISOString();
                     await saveMetadata();
 
                     window.showToast("Dosya başarıyla yüklendi!");
                     await window.checkUnreadFiles(); 
-                    window.renderGlobalTodayFiles(); // Global listeyi güncelle
+                    window.renderGlobalTodayFiles(); // Global listeyi anında güncelle
                     
                     if (type === 'district' && currentSelectedDistrict === parentValue) window.loadDistrictFiles(parentValue);
                     else if (type === 'personnel' && currentSelectedPersonnel === parentValue) window.loadPersonnelFiles(parentValue);
@@ -946,12 +981,14 @@
                 });
 
                 if(response.ok) {
+                    // Silinen dosyayı GitHub gecikmesini beklemeden global listeden ve veriden hemen çıkar
+                    globalTreeFiles = globalTreeFiles.filter(f => f.path !== pendingDeleteFile.path);
                     delete metadataCache[pendingDeleteFile.path];
                     await saveMetadata();
 
                     window.showToast("Dosya başarıyla silindi!");
                     await window.checkUnreadFiles(); 
-                    window.renderGlobalTodayFiles(); // Global listeyi güncelle
+                    window.renderGlobalTodayFiles(); // Global listeyi anında güncelle
                     
                     if (pendingDeleteFile.type === 'district' && currentSelectedDistrict === pendingDeleteFile.parentValue) window.loadDistrictFiles(pendingDeleteFile.parentValue);
                     else if (pendingDeleteFile.type === 'personnel' && currentSelectedPersonnel === pendingDeleteFile.parentValue) window.loadPersonnelFiles(pendingDeleteFile.parentValue);
