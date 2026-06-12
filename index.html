@@ -30,6 +30,7 @@
 </head>
 <body class="bg-[#f8fafc] min-h-screen flex flex-col">
 
+    <!-- Giriş Ekranı -->
     <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-[2000] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
@@ -64,6 +65,7 @@
         </div>
     </div>
 
+    <!-- Ana Uygulama -->
     <header class="sticky top-0 z-[100] glass-effect px-4 md:px-6 py-3">
         <div class="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center gap-3">
@@ -88,7 +90,8 @@
         
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-shrink-0">
             
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
+            <!-- İlçe Bazlı Dosya Yönetimi -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[520px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-building text-blue-500 text-sm"></i> İlçe Bazlı Yönetim
@@ -96,7 +99,7 @@
                     <div id="districtWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
                 <div class="p-4 flex flex-col gap-4 flex-grow overflow-hidden">
-                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 max-h-[150px]" id="interactiveDistrictList">
+                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 min-h-[120px] max-h-[150px]" id="interactiveDistrictList">
                     </div>
                     
                     <div class="w-full flex flex-col gap-3 flex-grow overflow-hidden">
@@ -135,7 +138,8 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
+            <!-- Personel Bazlı Dosya Yönetimi -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[520px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-user-tie text-emerald-500 text-sm"></i> Personel Bazlı Yönetim
@@ -143,7 +147,7 @@
                     <div id="personnelWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
                 <div class="p-4 flex flex-col gap-4 flex-grow overflow-hidden">
-                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 max-h-[150px]" id="interactivePersonnelList">
+                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 min-h-[120px] max-h-[150px]" id="interactivePersonnelList">
                     </div>
                     
                     <div class="w-full flex flex-col gap-3 flex-grow overflow-hidden">
@@ -182,23 +186,28 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[500px]">
+            <!-- Kurum Görüşleri Yönetimi -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[520px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-landmark text-purple-500 text-sm"></i> Kurum Görüşleri
                     </div>
                     <div id="kurumWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
-                <div class="p-4 flex flex-col gap-4 flex-grow overflow-hidden">
-                    <div class="flex gap-2 max-h-[120px] flex-shrink-0">
-                        <div class="w-1/2 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1" id="interactiveKurumDistrictList">
-                        </div>
-                        <div class="w-1/2 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1" id="interactiveKurumList">
-                            <p class="text-xs text-slate-400 italic flex justify-center items-center h-full">Önce ilçe seçin</p>
-                        </div>
+                
+                <div class="p-4 flex flex-col gap-3 flex-grow overflow-hidden">
+                    <!-- Üst: İlçe Seçimi -->
+                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar max-h-[100px] flex-shrink-0" id="interactiveKurumDistrictList">
                     </div>
                     
-                    <div class="w-full flex flex-col gap-3 flex-grow overflow-hidden">
+                    <!-- Orta: Kurum Seçimi (Gizli Başlar) -->
+                    <div id="kurumSubFolderContainer" class="hidden w-full flex-col gap-2 overflow-y-auto custom-scrollbar border-t border-slate-100 pt-2 max-h-[100px] flex-shrink-0">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Alt Klasör Seçin</p>
+                        <div id="interactiveKurumList" class="flex flex-col gap-2"></div>
+                    </div>
+                    
+                    <!-- Alt: Dosya Alanı (Gizli Başlar) -->
+                    <div id="kurumFileSection" class="hidden w-full flex-col gap-3 flex-grow overflow-hidden border-t border-slate-100 pt-2">
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-shrink-0">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Yeni Dosya Yükle</label>
@@ -211,11 +220,17 @@
                                         <i class="fas fa-upload mr-1"></i> Yükle
                                     </button>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <label class="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold cursor-pointer w-max">
-                                        <input type="checkbox" id="zipKurumFileCheck" class="rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer">
-                                        Yüklerken sıkıştır (.zip)
-                                    </label>
+                                <div class="flex justify-between items-center flex-wrap gap-2">
+                                    <div class="flex flex-wrap gap-3">
+                                        <label class="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold cursor-pointer w-max">
+                                            <input type="checkbox" id="zipKurumFileCheck" class="rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer">
+                                            Sıkıştır (.zip)
+                                        </label>
+                                        <label class="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold cursor-pointer w-max" title="Bu dosyayı tüm ilçelerin bu kurum klasörüne yükler">
+                                            <input type="checkbox" id="applyAllDistrictsCheck" class="rounded border-slate-300 text-red-500 focus:ring-red-500 cursor-pointer">
+                                            <span class="text-red-500">Tüm İlçelere Uygula</span>
+                                        </label>
+                                    </div>
                                     <span id="kurumCountLabel" class="text-[9px] text-purple-600 font-bold italic"></span>
                                 </div>
                             </div>
@@ -236,8 +251,10 @@
 
         </div>
 
+        <!-- Alt Bölüm: Bugün ve Dün Yüklenenler -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 flex-shrink-0">
             
+            <!-- Bugün Yüklenenler -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
                 <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
                     <i class="fas fa-calendar-day text-indigo-500 text-lg"></i>
@@ -255,6 +272,7 @@
                 </div>
             </div>
 
+            <!-- Dün Yüklenenler -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[400px]">
                 <div class="bg-slate-50 p-4 border-b border-slate-100 flex items-center gap-3 flex-shrink-0">
                     <i class="fas fa-history text-slate-400 text-lg"></i>
@@ -276,6 +294,7 @@
 
     </main>
 
+    <!-- Modal: Dosya Silme Onayı -->
     <div id="confirmDeleteModal" class="fixed inset-0 bg-slate-900/50 z-[3000] hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative overflow-hidden text-center">
             <div class="text-red-500 mb-4 text-4xl"><i class="fas fa-exclamation-circle"></i></div>
@@ -361,7 +380,6 @@
             window.renderInteractiveDistricts();
             window.renderInteractivePersonnel();
             window.renderInteractiveKurumDistricts();
-            window.renderInteractiveKurums();
             
             await window.loadMetadata(); 
             await window.checkUnreadFiles();
@@ -540,7 +558,7 @@
             window.renderInteractiveDistricts();
             window.renderInteractivePersonnel();
             window.renderInteractiveKurumDistricts();
-            window.renderInteractiveKurums();
+            if(currentSelectedKurumDistrict) window.renderInteractiveKurums();
         }
 
         window.renderInteractiveDistricts = function() {
@@ -667,10 +685,12 @@
         window.selectKurumDistrict = function(dist) {
             currentSelectedKurumDistrict = dist;
             currentSelectedKurum = null; 
-            document.getElementById('uploadTargetKurumLabel').innerText = `${dist} > Seçiniz`;
-            document.getElementById('currentKurumLabel').innerText = "-";
-            document.getElementById('kurumFileListContainer').innerHTML = '<p class="text-xs text-slate-400 italic flex justify-center items-center h-full absolute inset-0">Lütfen kurum seçin.</p>';
             
+            document.getElementById('kurumSubFolderContainer').classList.remove('hidden');
+            document.getElementById('kurumSubFolderContainer').classList.add('flex');
+            document.getElementById('kurumFileSection').classList.add('hidden');
+            document.getElementById('kurumFileSection').classList.remove('flex');
+
             window.renderInteractiveKurumDistricts();
             window.renderInteractiveKurums();
         }
@@ -679,13 +699,7 @@
             const container = document.getElementById('interactiveKurumList');
             if(!container) return;
             
-            if(!currentSelectedKurumDistrict) {
-                container.innerHTML = '<p class="text-xs text-slate-400 italic flex justify-center items-center h-full">Önce ilçe seçin</p>';
-                return;
-            }
-
             let html = '';
-            
             kurumListesi.forEach(kurum => {
                 const count = getFolderFileCount('kurum_folder', currentSelectedKurumDistrict, kurum);
                 const pathKey = `${currentSelectedKurumDistrict}/${kurum}`;
@@ -713,6 +727,10 @@
 
         window.selectKurum = function(kurum) {
             currentSelectedKurum = kurum;
+            
+            document.getElementById('kurumFileSection').classList.remove('hidden');
+            document.getElementById('kurumFileSection').classList.add('flex');
+            
             document.getElementById('uploadTargetKurumLabel').innerText = `${currentSelectedKurumDistrict} > ${kurum}`;
             window.renderInteractiveKurums();
             window.loadKurumFiles(currentSelectedKurumDistrict, kurum);
@@ -804,9 +822,10 @@
                         parentValue = pMapReverse[safeFolder] || safeFolder;
                         displayName = parts.slice(2).join('/');
                     }
-                    // kurum görüşlerini burada listelemiyoruz.
                     
-                    if (type && type !== 'kurum') {
+                    // kurum görüşlerini burada listelemiyoruz. (type !== 'kurum')
+                    
+                    if (type) {
                         const fileData = {
                             path: path,
                             name: displayName,
@@ -831,8 +850,10 @@
                 let html = '';
                 files.forEach(f => {
                     const timeText = f.dateObj.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+                    
                     const badgeClass = f.type === 'district' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
                     const iconClass = f.type === 'district' ? 'fa-building text-blue-500' : 'fa-user-tie text-emerald-500';
+                                      
                     const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
 
                     html += `
@@ -1125,29 +1146,40 @@
             const totalFiles = fileInput.files.length;
             let successCount = 0;
 
-            for (let i = 0; i < totalFiles; i++) {
-                window.toggleLoader(true, `Dosyalar yükleniyor... (${i+1}/${totalFiles})`);
-                const success = await executeSingleUpload(fileInput.files[i], parentValue, type, zipCheck);
-                if(success) successCount++;
+            if (type === 'kurum' && document.getElementById('applyAllDistrictsCheck').checked) {
+                const totalOperations = totalFiles * distList.length;
+                let currentOp = 0;
+                for (let i = 0; i < totalFiles; i++) {
+                    for (let d of distList) {
+                        currentOp++;
+                        window.toggleLoader(true, `Tüm ilçelere yükleniyor... (${currentOp}/${totalOperations})`);
+                        const pVal = `${d}|${currentSelectedKurum}`;
+                        const success = await executeSingleUpload(fileInput.files[i], pVal, type, zipCheck);
+                        if(success) successCount++;
+                    }
+                }
+            } else {
+                for (let i = 0; i < totalFiles; i++) {
+                    window.toggleLoader(true, `Dosyalar yükleniyor... (${i+1}/${totalFiles})`);
+                    const success = await executeSingleUpload(fileInput.files[i], parentValue, type, zipCheck);
+                    if(success) successCount++;
+                }
             }
 
             fileInput.value = ""; 
             if(type === 'district') { document.getElementById('zipFileCheck').checked = false; document.getElementById('distCountLabel').innerText = ''; }
             if(type === 'personnel') { document.getElementById('zipPersonnelFileCheck').checked = false; document.getElementById('persCountLabel').innerText = ''; }
-            if(type === 'kurum') { document.getElementById('zipKurumFileCheck').checked = false; document.getElementById('kurumCountLabel').innerText = ''; }
+            if(type === 'kurum') { document.getElementById('zipKurumFileCheck').checked = false; document.getElementById('applyAllDistrictsCheck').checked = false; document.getElementById('kurumCountLabel').innerText = ''; }
 
             window.toggleLoader(false);
             if(successCount > 0) {
-                window.showToast(`${successCount} dosya başarıyla yüklendi!`);
+                window.showToast(`${successCount} işlem başarıyla tamamlandı!`);
                 await window.checkUnreadFiles(); 
                 if(type !== 'kurum') window.renderGlobalRecentFiles();
                 
                 if (type === 'district') window.loadDistrictFiles(parentValue);
                 else if (type === 'personnel') window.loadPersonnelFiles(parentValue);
-                else if (type === 'kurum') {
-                    const parts = parentValue.split('|');
-                    window.loadKurumFiles(parts[0], parts[1]);
-                }
+                else if (type === 'kurum') window.loadKurumFiles(currentSelectedKurumDistrict, currentSelectedKurum);
             } else {
                 window.showToast("Dosya yükleme başarısız oldu.", "error");
             }
@@ -1261,7 +1293,7 @@
 
                     window.showToast("Dosya başarıyla silindi!");
                     await window.checkUnreadFiles(); 
-                    if(pendingDeleteFile.type !== 'kurum') window.renderGlobalRecentFiles(); 
+                    if (pendingDeleteFile.type !== 'kurum') window.renderGlobalRecentFiles(); 
                     
                     if (pendingDeleteFile.type === 'district' && currentSelectedDistrict === pendingDeleteFile.parentValue) window.loadDistrictFiles(pendingDeleteFile.parentValue);
                     else if (pendingDeleteFile.type === 'personnel' && currentSelectedPersonnel === pendingDeleteFile.parentValue) window.loadPersonnelFiles(pendingDeleteFile.parentValue);
