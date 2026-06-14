@@ -16,15 +16,6 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
         
-        .blink-warning { animation: blinker 1s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
-
-        .blink-bg { animation: blink-bg-anim 1.5s infinite; }
-        @keyframes blink-bg-anim {
-            0%, 100% { background-color: #fee2e2; color: #dc2626; border-color: #fca5a5; }
-            50% { background-color: #ef4444; color: #ffffff; border-color: #ef4444; }
-        }
-
         #loginScreen { transition: opacity 0.5s ease; }
     </style>
 </head>
@@ -91,12 +82,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-shrink-0">
             
             <!-- İlçe Bazlı Dosya Yönetimi -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[550px]">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[650px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-building text-blue-500 text-sm"></i> İlçe Bazlı Yönetim
                     </div>
-                    <div id="districtWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
                 <div class="p-4 flex flex-col gap-4 flex-grow overflow-hidden">
                     <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 min-h-[140px] max-h-[150px]" id="interactiveDistrictList">
@@ -139,12 +129,11 @@
             </div>
 
             <!-- Personel Bazlı Dosya Yönetimi -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[550px]">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[650px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-user-tie text-emerald-500 text-sm"></i> Personel Bazlı Yönetim
                     </div>
-                    <div id="personnelWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
                 <div class="p-4 flex flex-col gap-4 flex-grow overflow-hidden">
                     <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 min-h-[140px] max-h-[150px]" id="interactivePersonnelList">
@@ -187,31 +176,26 @@
             </div>
 
             <!-- Kurum Görüşleri Yönetimi -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[550px]">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col h-[650px]">
                 <div class="w-full flex justify-between items-center p-3 md:p-4 bg-slate-50 border-b border-slate-100 flex-wrap gap-2">
                     <div class="flex items-center gap-2 text-slate-700 font-bold text-xs uppercase tracking-wide">
                         <i class="fas fa-landmark text-purple-500 text-sm"></i> Kurum Görüşleri
                     </div>
-                    <div id="kurumWarningContainer" class="flex gap-1 flex-wrap"></div>
                 </div>
                 
                 <div class="p-4 flex flex-col gap-3 flex-grow overflow-hidden">
-                    <!-- Üst: İlçe ve Kurum Seçimi Yan Yana -->
-                    <div class="flex gap-2 min-h-[140px] max-h-[150px] flex-shrink-0">
-                        <!-- İlçe Listesi (Sol) -->
-                        <div class="w-1/2 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1" id="interactiveKurumDistrictList">
-                        </div>
-                        
-                        <!-- Kurum Listesi (Sağ) -->
-                        <div class="w-1/2 flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 bg-slate-50/50 rounded-xl border border-slate-100 p-2" id="kurumSubFolderContainer">
-                            <div id="interactiveKurumList" class="flex flex-col gap-2 h-full">
-                                <p class="text-[10px] text-slate-400 italic flex justify-center items-center h-full text-center">Önce ilçe seçin</p>
-                            </div>
-                        </div>
+                    <!-- Üst: İlçe Seçimi -->
+                    <div class="w-full flex flex-col gap-2 overflow-y-auto custom-scrollbar max-h-[100px] flex-shrink-0" id="interactiveKurumDistrictList">
+                    </div>
+                    
+                    <!-- Orta: Kurum Seçimi (Gizli Başlar) -->
+                    <div id="kurumSubFolderContainer" class="hidden w-full flex-col gap-2 overflow-y-auto custom-scrollbar border-t border-slate-100 pt-2 max-h-[100px] flex-shrink-0">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Alt Klasör Seçin</p>
+                        <div id="interactiveKurumList" class="flex flex-col gap-2"></div>
                     </div>
                     
                     <!-- Alt: Dosya Alanı (Gizli Başlar) -->
-                    <div id="kurumFileSection" class="hidden w-full flex-col gap-3 flex-grow overflow-hidden border-t border-slate-100 pt-3">
+                    <div id="kurumFileSection" class="hidden w-full flex-col gap-3 flex-grow overflow-hidden border-t border-slate-100 pt-2">
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-shrink-0">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Yeni Dosya Yükle</label>
@@ -335,15 +319,8 @@
         // Interaktif Liste Global Değişkenleri
         let currentSelectedDistrict = null;
         let currentSelectedPersonnel = null;
-        
         let currentSelectedKurumDistrict = null;
         let currentSelectedKurum = null;
-
-        let unreadDistrictsSet = new Set();
-        let unreadPersonnelSet = new Set();
-        
-        let unreadKurumDistrictsSet = new Set();
-        let unreadKurumFoldersSet = new Set();
         
         const distList = ["AKDENİZ", "ANAMUR", "AYDINCIK", "BOZYAZI", "ÇAMLIYAYLA", "ERDEMLİ", "GÜLNAR", "MEZİTLİ", "MUT", "SİLİFKE", "TARSUS", "TOROSLAR", "YENİŞEHİR"];
         const persList = ["TEVFİK Y.", "VOLKAN İ.", "TAHA G.", "ÖZKAN A.", "SERDAR A.", "MÜMİN A.", "AYŞE P.", "HASAN İ.", "MURAT S.", "NEZİHE G.", "ÖMER Ç.", "HİKMET G.", "HİLMİ M.", "HÜSEYİN B.", "SÜLEYMAN Y.", "BARIŞ Y.", "MAHMUT M.", "EMİNE K."];
@@ -381,12 +358,8 @@
 
         window.initializeApp = async function() {
             window.toggleLoader(true, "Sistem Verileri Yükleniyor...");
-            window.renderInteractiveDistricts();
-            window.renderInteractivePersonnel();
-            window.renderInteractiveKurumDistricts();
-            
             await window.loadMetadata(); 
-            await window.checkUnreadFiles();
+            await window.fetchGlobalTree();
             await window.syncMissingDates(); 
             window.renderGlobalRecentFiles();
             window.toggleLoader(false);
@@ -450,7 +423,7 @@
             }
         }
 
-        window.checkUnreadFiles = async function() {
+        window.fetchGlobalTree = async function() {
             try {
                 const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`, { 
                     headers: { 'Authorization': `token ${GITHUB_TOKEN}` } 
@@ -458,7 +431,10 @@
                 if (res.ok) {
                     const data = await res.json();
                     globalTreeFiles = data.tree.filter(f => f.type === 'blob');
-                    window.renderWarnings();
+                    window.renderInteractiveDistricts();
+                    window.renderInteractivePersonnel();
+                    window.renderInteractiveKurumDistricts();
+                    if(currentSelectedKurumDistrict) window.renderInteractiveKurums();
                 }
             } catch(e) {
                 console.error("Ağaç yapısı alınamadı:", e);
@@ -503,84 +479,15 @@
             return count;
         }
 
-        window.renderWarnings = function() {
-            const viewedFiles = JSON.parse(localStorage.getItem('tha_viewed_files') || '[]');
-            
-            unreadDistrictsSet.clear();
-            unreadPersonnelSet.clear();
-            unreadKurumDistrictsSet.clear();
-            unreadKurumFoldersSet.clear();
-            
-            const pMap = {};
-            persList.forEach(p => pMap[p.replace(/[\s\.]+/g, '_')] = p);
-
-            globalTreeFiles.forEach(f => {
-                if (!viewedFiles.includes(f.sha) && f.type === 'blob') {
-                    if (f.path.startsWith('ek_dosyalar/')) {
-                        const parts = f.path.split('/');
-                        if (parts.length > 2) {
-                            unreadDistrictsSet.add(parts[1]);
-                        }
-                    } else if (f.path.startsWith('personel_dosyalar/')) {
-                        const parts = f.path.split('/');
-                        if (parts.length > 2) {
-                            const safeFolder = parts[1];
-                            if (pMap[safeFolder]) {
-                                unreadPersonnelSet.add(pMap[safeFolder]);
-                            }
-                        }
-                    } else if (f.path.startsWith('kurum_gorusleri/')) {
-                        const parts = f.path.split('/');
-                        if (parts.length > 3) {
-                            const dist = parts[1];
-                            const kurum = parts[2];
-                            unreadKurumDistrictsSet.add(dist);
-                            unreadKurumFoldersSet.add(`${dist}/${kurum}`);
-                        }
-                    }
-                }
-            });
-
-            const dContainer = document.getElementById('districtWarningContainer');
-            dContainer.innerHTML = '';
-            unreadDistrictsSet.forEach(dist => {
-                dContainer.innerHTML += `<span onclick="window.selectDistrict('${dist}');" class="blink-bg px-2 py-1 rounded text-[9px] font-bold cursor-pointer shadow-sm border border-red-200"><i class="fas fa-bell mr-1"></i>${dist} YENİ</span>`;
-            });
-
-            const pContainer = document.getElementById('personnelWarningContainer');
-            pContainer.innerHTML = '';
-            unreadPersonnelSet.forEach(pers => {
-                pContainer.innerHTML += `<span onclick="window.selectPersonnel('${pers}');" class="blink-bg px-2 py-1 rounded text-[9px] font-bold cursor-pointer shadow-sm border border-red-200"><i class="fas fa-bell mr-1"></i>${pers} YENİ</span>`;
-            });
-
-            const kContainer = document.getElementById('kurumWarningContainer');
-            kContainer.innerHTML = '';
-            unreadKurumFoldersSet.forEach(item => {
-                kContainer.innerHTML += `<span onclick="window.selectKurumDistrict('${item.split('/')[0]}'); setTimeout(()=>window.selectKurum('${item.split('/')[1]}'), 100);" class="blink-bg px-2 py-1 rounded text-[9px] font-bold cursor-pointer shadow-sm border border-red-200"><i class="fas fa-bell mr-1"></i>${item} YENİ</span>`;
-            });
-
-            window.renderInteractiveDistricts();
-            window.renderInteractivePersonnel();
-            window.renderInteractiveKurumDistricts();
-            if(currentSelectedKurumDistrict) window.renderInteractiveKurums();
-        }
-
         window.renderInteractiveDistricts = function() {
             const container = document.getElementById('interactiveDistrictList');
             if(!container) return;
             let html = '';
             
-            let sortedDistList = [...distList].sort((a, b) => {
-                const aUnread = unreadDistrictsSet.has(a);
-                const bUnread = unreadDistrictsSet.has(b);
-                if (aUnread && !bUnread) return -1;
-                if (!aUnread && bUnread) return 1;
-                return a.localeCompare(b);
-            });
+            let sortedDistList = [...distList];
             
             sortedDistList.forEach(dist => {
                 const count = getFolderFileCount('district', dist);
-                const hasUnread = unreadDistrictsSet.has(dist);
                 const isSelected = currentSelectedDistrict === dist;
                 
                 const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
@@ -593,7 +500,6 @@
                             ${dist}
                         </div>
                         <div class="flex items-center gap-1.5">
-                            ${hasUnread ? '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>' : ''}
                             <span class="bg-${count > 0 ? 'blue-100 text-blue-600' : 'slate-100 text-slate-400'} px-2 py-0.5 rounded-lg text-[9px] min-w-[20px] text-center">${count}</span>
                         </div>
                     </button>
@@ -614,17 +520,10 @@
             if(!container) return;
             let html = '';
             
-            let sortedPersList = [...persList].sort((a, b) => {
-                const aUnread = unreadPersonnelSet.has(a);
-                const bUnread = unreadPersonnelSet.has(b);
-                if (aUnread && !bUnread) return -1;
-                if (!aUnread && bUnread) return 1;
-                return a.localeCompare(b);
-            });
+            let sortedPersList = [...persList];
             
             sortedPersList.forEach(pers => {
                 const count = getFolderFileCount('personnel', pers);
-                const hasUnread = unreadPersonnelSet.has(pers);
                 const isSelected = currentSelectedPersonnel === pers;
                 
                 const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
@@ -637,7 +536,6 @@
                             ${pers}
                         </div>
                         <div class="flex items-center gap-1.5">
-                            ${hasUnread ? '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>' : ''}
                             <span class="bg-${count > 0 ? 'emerald-100 text-emerald-600' : 'slate-100 text-slate-400'} px-2 py-0.5 rounded-lg text-[9px] min-w-[20px] text-center">${count}</span>
                         </div>
                     </button>
@@ -658,17 +556,10 @@
             if(!container) return;
             let html = '';
             
-            let sortedDistList = [...distList].sort((a, b) => {
-                const aUnread = unreadKurumDistrictsSet.has(a);
-                const bUnread = unreadKurumDistrictsSet.has(b);
-                if (aUnread && !bUnread) return -1;
-                if (!aUnread && bUnread) return 1;
-                return a.localeCompare(b);
-            });
+            let sortedDistList = [...distList];
             
             sortedDistList.forEach(dist => {
                 const count = getFolderFileCount('kurum_district', dist);
-                const hasUnread = unreadKurumDistrictsSet.has(dist);
                 const isSelected = currentSelectedKurumDistrict === dist;
                 
                 const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
@@ -706,8 +597,6 @@
             let html = '';
             kurumListesi.forEach(kurum => {
                 const count = getFolderFileCount('kurum_folder', currentSelectedKurumDistrict, kurum);
-                const pathKey = `${currentSelectedKurumDistrict}/${kurum}`;
-                const hasUnread = unreadKurumFoldersSet.has(pathKey);
                 const isSelected = currentSelectedKurum === kurum;
                 
                 const baseClass = "w-full text-left p-2.5 rounded-xl border transition-all flex justify-between items-center group cursor-pointer text-xs font-bold flex-shrink-0 ";
@@ -720,7 +609,6 @@
                             <span class="truncate">${kurum}</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            ${hasUnread ? '<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>' : ''}
                             <span class="bg-${count > 0 ? 'purple-100 text-purple-600' : 'slate-100 text-slate-400'} px-2 py-0.5 rounded-lg text-[9px] min-w-[20px] text-center">${count}</span>
                         </div>
                     </button>
@@ -738,21 +626,6 @@
             document.getElementById('uploadTargetKurumLabel').innerText = `${currentSelectedKurumDistrict} > ${kurum}`;
             window.renderInteractiveKurums();
             window.loadKurumFiles(currentSelectedKurumDistrict, kurum);
-        }
-
-        window.markFilesAsRead = function(files) {
-            let viewedFiles = JSON.parse(localStorage.getItem('tha_viewed_files') || '[]');
-            let changed = false;
-            files.forEach(f => {
-                if (!viewedFiles.includes(f.sha)) {
-                    viewedFiles.push(f.sha);
-                    changed = true;
-                }
-            });
-            if (changed) {
-                localStorage.setItem('tha_viewed_files', JSON.stringify(viewedFiles));
-                window.renderWarnings();
-            }
         }
 
         window.toggleLoader = function(show, text = "İşlem Yapılıyor") {
@@ -826,8 +699,6 @@
                         parentValue = pMapReverse[safeFolder] || safeFolder;
                         displayName = parts.slice(2).join('/');
                     }
-                    
-                    // kurum görüşlerini burada listelemiyoruz. (type !== 'kurum')
                     
                     if (type) {
                         const fileData = {
@@ -921,7 +792,6 @@
                     if(needsSave) await saveMetadata();
 
                     renderFileList(files, district, 'district');
-                    markFilesAsRead(files);
                     window.renderGlobalRecentFiles(); 
                 } else if (res.status === 404) {
                     renderFileList([], district, 'district'); 
@@ -972,7 +842,6 @@
                     if(needsSave) await saveMetadata();
 
                     renderFileList(files, personnel, 'personnel');
-                    markFilesAsRead(files);
                     window.renderGlobalRecentFiles();
                 } else if (res.status === 404) {
                     renderFileList([], personnel, 'personnel'); 
@@ -1021,7 +890,6 @@
                     if(needsSave) await saveMetadata();
 
                     renderFileList(files, `${district}|${kurum}`, 'kurum');
-                    markFilesAsRead(files);
                 } else if (res.status === 404) {
                     renderFileList([], `${district}|${kurum}`, 'kurum'); 
                 } else {
@@ -1178,7 +1046,7 @@
             window.toggleLoader(false);
             if(successCount > 0) {
                 window.showToast(`${successCount} işlem başarıyla tamamlandı!`);
-                await window.checkUnreadFiles(); 
+                await window.fetchGlobalTree(); 
                 if(type !== 'kurum') window.renderGlobalRecentFiles();
                 
                 if (type === 'district') window.loadDistrictFiles(parentValue);
@@ -1296,7 +1164,7 @@
                     await saveMetadata();
 
                     window.showToast("Dosya başarıyla silindi!");
-                    await window.checkUnreadFiles(); 
+                    await window.fetchGlobalTree(); 
                     if (pendingDeleteFile.type !== 'kurum') window.renderGlobalRecentFiles(); 
                     
                     if (pendingDeleteFile.type === 'district' && currentSelectedDistrict === pendingDeleteFile.parentValue) window.loadDistrictFiles(pendingDeleteFile.parentValue);
