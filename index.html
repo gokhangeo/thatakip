@@ -638,6 +638,79 @@
             setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(20px)'; }, duration);
         };
 
+        function escapeDownloadAttribute(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        // Keep the original download request on the same network security path.
+        // Only save the response after checking that it is an actual file.
+        window.downloadFile = async function(button) {
+            if (button.disabled) return;
+            const path = button.dataset.downloadPath;
+            const fileName = path && path.split('/').pop();
+            if (!fileName) return;
+
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> İndiriliyor';
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 120000);
+            let objectUrl = null;
+
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${encodedPath}`;
+                const response = await fetch(url, { signal: controller.signal });
+                if (!response.ok) {
+                    throw new Error(response.status === 404
+                        ? 'Dosya bulunamadı. Listeyi yenileyip tekrar deneyin.'
+                        : `Dosya indirilemedi (HTTP ${response.status}).`);
+                }
+
+                const blob = await response.blob();
+                if (!blob.size) throw new Error('Sunucudan boş dosya geldi. Tekrar deneyin.');
+
+                const preview = await blob.slice(0, 16384).text();
+                const isHtml = /^(?:\uFEFF)?\s*(?:<!doctype\s+html|<html\b)/i.test(preview)
+                    || /text\/html|application\/xhtml\+xml/i.test(blob.type);
+                if (isHtml && /bcsi_scan|g[uü]venlik kontrollerinden ge[cç]mektedir|patience page|security checks/i.test(preview)) {
+                    throw new Error('Kurum ağının güvenlik taraması henüz tamamlanmadı. Bir süre sonra tekrar deneyin; devam ederse bilgi işlem birimine bildirin.');
+                }
+                // Excel also supports legitimate HTML workbooks with an .xls extension.
+                const isExcelHtml = /\.xls$/i.test(fileName)
+                    && /urn:schemas-microsoft-com:office:excel|<meta[^>]+content=["']?Excel/i.test(preview);
+                if (isHtml && !/\.(?:html?|xhtml)$/i.test(fileName) && !isExcelHtml) {
+                    throw new Error('Dosya yerine bir ağ uyarı sayfası geldi. İndirme yapılmadı; bilgi işlem birimine bildirin.');
+                }
+
+                objectUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = fileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                try { link.click(); } finally { link.remove(); }
+                window.showToast('İndirme tarayıcıya iletildi.');
+            } catch (error) {
+                const message = error.name === 'AbortError'
+                    ? 'İndirme zaman aşımına uğradı. Ağ bağlantısını kontrol edip tekrar deneyin.'
+                    : error instanceof TypeError
+                        ? 'Dosyaya erişilemedi. Ağ bağlantısını kontrol edin; kurum ağı erişimi engelliyorsa bilgi işlem birimine bildirin.'
+                        : error.message || 'Dosya indirilemedi. Tekrar deneyin.';
+                window.showToast(message, 'error', 10000);
+            } finally {
+                clearTimeout(timeout);
+                // Give the browser time to start reading the object URL before releasing it.
+                if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+                button.disabled = false;
+                button.removeAttribute('aria-busy');
+                button.innerHTML = originalContent;
+            }
+        };
+
         window.getFileDate = async function(path) {
             try {
                 const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?path=${encodeURIComponent(path)}&per_page=1`, {
@@ -724,8 +797,6 @@
                     const badgeClass = f.type === 'district' ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200';
                     const iconClass = f.type === 'district' ? 'fa-building text-blue-500' : 'fa-user-tie text-emerald-500';
                                       
-                    const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
-
                     html += `
                         <li class="p-3 flex flex-col md:flex-row md:justify-between md:items-center hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0 gap-3">
                             <div class="flex items-center gap-3 flex-grow truncate">
@@ -739,9 +810,9 @@
                                 <button onclick="requestDeleteFile('${f.path}', '${f.sha}', '${f.parentValue}', '${f.type}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
                                     <i class="fas fa-trash-alt mr-1"></i> Sil
                                 </button>
-                                <a href="${downloadUrl}" target="_blank" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all shadow-sm">
+                                <button type="button" onclick="downloadFile(this)" data-download-path="${escapeDownloadAttribute(f.path)}" class="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-slate-200 transition-all shadow-sm disabled:opacity-50 disabled:cursor-wait">
                                     <i class="fas fa-download mr-1"></i> İndir
-                                </a>
+                                </button>
                             </div>
                         </li>
                     `;
@@ -920,9 +991,9 @@
                         <button onclick="requestDeleteFile('${f.path}', '${f.sha}', '${parentValue}', '${type}')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
                             <i class="fas fa-trash-alt"></i>
                         </button>
-                        <a href="${f.download_url}" target="_blank" class="bg-${fileIconColor}-50 text-${fileIconColor}-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-${fileIconColor}-600 hover:text-white transition-all shadow-sm">
+                        <button type="button" onclick="downloadFile(this)" data-download-path="${escapeDownloadAttribute(f.path)}" title="Dosyayı indir" aria-label="Dosyayı indir" class="bg-${fileIconColor}-50 text-${fileIconColor}-600 px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-${fileIconColor}-600 hover:text-white transition-all shadow-sm disabled:opacity-50 disabled:cursor-wait">
                             <i class="fas fa-download"></i>
-                        </a>
+                        </button>
                     </div>
                 </li>
             `;
